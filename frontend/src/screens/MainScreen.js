@@ -1,8 +1,30 @@
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
-import MapView, { Marker } from "react-native-maps";
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Alert,
+} from "react-native";
+import MapView, { Marker, Polyline } from "react-native-maps";
 
 export default function MainScreen() {
+  const [itinerary, setItinerary] = useState([]);
+
+  // Function to calculate the itinerary
+  const calculateItinerary = () => {
+    // Simulate a calculated itinerary (in order)
+    const newItinerary = [
+      { latitude: 41.3861, longitude: 2.1744 }, // Bin 1
+      { latitude: 41.3871, longitude: 2.1754 }, // Bin 2
+      { latitude: 41.3881, longitude: 2.1764 }, // Bin 3
+      { latitude: 41.3860156, longitude: 2.1774 }, // Bin 4
+    ];
+    setItinerary(newItinerary);
+    Alert.alert("Itinerary Calculated", "Check the map for the route!");
+  };
+
   return (
     <View style={styles.container}>
       {/* En-tête */}
@@ -42,6 +64,15 @@ export default function MainScreen() {
           coordinate={{ latitude: 41.3860156, longitude: 2.1774 }}
           title="Bin 4"
         />
+
+        {/* Display Itinerary Polyline */}
+        {itinerary.length > 0 && (
+          <Polyline
+            coordinates={itinerary}
+            strokeColor="#0000FF" // Blue line
+            strokeWidth={3}
+          />
+        )}
       </MapView>
 
       {/* Barre de navigation inférieure */}
@@ -49,7 +80,10 @@ export default function MainScreen() {
         <TouchableOpacity style={styles.navButton}>
           <Text style={styles.navText}>Home</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.calculateButton}>
+        <TouchableOpacity
+          style={styles.calculateButton}
+          onPress={calculateItinerary}
+        >
           <Text style={styles.calculateText}>Calculate Itinerary</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navButton}>
