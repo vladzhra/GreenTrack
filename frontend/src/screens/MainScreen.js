@@ -23,6 +23,36 @@ export default function MainScreen({ navigation }) {
     name: "John Doe",
     email: "johndoe@example.com",
   });
+  const [bins, setBins] = useState([
+    { latitude: 41.3861, longitude: 2.1744, title: "Bin 1" },
+    { latitude: 41.3871, longitude: 2.1754, title: "Bin 2" },
+    { latitude: 41.3881, longitude: 2.1764, title: "Bin 3" },
+    { latitude: 41.3860156, longitude: 2.1774, title: "Bin 4" },
+  ]);
+
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [newBin, setNewBin] = useState({
+    latitude: null,
+    longitude: null,
+    title: "",
+  });
+
+  const handleLongPress = (event) => {
+    const { latitude, longitude } = event.nativeEvent.coordinate;
+    setNewBin({ latitude, longitude, title: "" });
+    setModalVisible(true);
+  };
+
+  const handleAddBin = () => {
+    if (newBin.title.trim()) {
+      setBins([...bins, newBin]);
+      setModalVisible(false);
+      setNewBin({ latitude: null, longitude: null, title: "" });
+      Alert.alert("Bin Added", "New bin added to the map.");
+    } else {
+      Alert.alert("Error", "Please provide a title for the bin.");
+    }
+  };
 
   // Function to fetch route from Google Directions API
   const fetchRoute = async () => {
@@ -118,6 +148,7 @@ export default function MainScreen({ navigation }) {
           latitudeDelta: 0.0922,
           longitudeDelta: 0.0421,
         }}
+        onLongPress={handleLongPress}
       >
         {/* Markers */}
         <Marker
@@ -201,6 +232,38 @@ export default function MainScreen({ navigation }) {
             >
               <MaterialIcons name="settings" size={20} color="white" />
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Add Bin Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isModalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Add Bin</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Bin Title"
+              placeholderTextColor="gray"
+              value={newBin.title}
+              onChangeText={(text) => setNewBin({ ...newBin, title: text })}
+            />
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.addButton} onPress={handleAddBin}>
+                <Text style={styles.addButtonText}>Add Bin</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -318,6 +381,34 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   closeButtonText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  modalActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  cancelButton: {
+    backgroundColor: "#d9534f",
+    padding: 10,
+    borderRadius: 8,
+    flex: 1,
+    marginRight: 10,
+    alignItems: "center",
+  },
+  cancelButtonText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  addButton: {
+    backgroundColor: "#5cb85c",
+    padding: 10,
+    borderRadius: 8,
+    flex: 1,
+    alignItems: "center",
+  },
+  addButtonText: {
     color: "white",
     fontWeight: "bold",
   },
