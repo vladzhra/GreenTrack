@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
+import { MaterialIcons } from "@expo/vector-icons";
 import axios from "axios";
 import { GOOGLE_MAPS_API_KEY } from "@env";
 
@@ -91,8 +92,10 @@ export default function MainScreen({ navigation }) {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.navButton}>
-          <Text style={styles.navText}>Home</Text>
+        <TouchableOpacity
+        // onPress={() => navigation.goBack()}
+        >
+          <MaterialIcons name="arrow-back-ios-new" size={24} color="white" />
         </TouchableOpacity>
         <View>
           <Text style={styles.headerText}>Collection Route</Text>
@@ -169,12 +172,14 @@ export default function MainScreen({ navigation }) {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Profile</Text>
+            <Text style={styles.modalSubTitle}>Name: </Text>
             <TextInput
               style={styles.input}
               placeholder="Name"
               value={profile.name}
               onChangeText={(text) => setProfile({ ...profile, name: text })}
             />
+            <Text style={styles.modalSubTitle}>Email: </Text>
             <TextInput
               style={styles.input}
               placeholder="Email"
@@ -182,19 +187,19 @@ export default function MainScreen({ navigation }) {
               onChangeText={(text) => setProfile({ ...profile, email: text })}
             />
             <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setProfileModalVisible(false)}
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               style={styles.settingsButton}
               onPress={() => {
                 setProfileModalVisible(false);
                 navigation.navigate("Settings");
               }}
             >
-              <Text style={styles.settingsButtonText}>Settings</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setProfileModalVisible(false)}
-            >
-              <Text style={styles.closeButtonText}>Close</Text>
+              <MaterialIcons name="settings" size={20} color="white" />
             </TouchableOpacity>
           </View>
         </View>
@@ -240,10 +245,9 @@ const styles = StyleSheet.create({
     height: 100,
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 10,
+    paddingHorizontal: "20%",
   },
   navButton: {
-    flex: 1,
     alignItems: "center",
   },
   navText: {
@@ -253,7 +257,7 @@ const styles = StyleSheet.create({
   },
   calculateButton: {
     flex: 2,
-    backgroundColor: "#4F46E5",
+    backgroundColor: "#001F3F",
     padding: 10,
     borderRadius: 8,
     marginTop: -20,
@@ -281,6 +285,12 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 20,
   },
+  modalSubTitle: {
+    fontSize: 15,
+    fontWeight: "bold",
+    alignSelf: "flex-start",
+    marginBottom: 5,
+  },
   input: {
     width: "100%",
     padding: 10,
@@ -290,8 +300,11 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   settingsButton: {
+    position: "absolute",
+    top: 12,
+    right: 12,
     backgroundColor: "#4F46E5",
-    padding: 10,
+    padding: 7,
     borderRadius: 8,
     marginBottom: 10,
   },
