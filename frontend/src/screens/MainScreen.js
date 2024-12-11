@@ -6,27 +6,34 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  Modal,
+  TextInput,
+  ActivityIndicator,
 } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import axios from "axios";
 
-export default function MainScreen() {
+export default function MainScreen({ navigation }) {
   const [routeCoordinates, setRouteCoordinates] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isProfileModalVisible, setProfileModalVisible] = useState(false);
+  const [profile, setProfile] = useState({
+    name: "John Doe",
+    email: "johndoe@example.com",
+  });
 
-  const GOOGLE_MAPS_API_KEY = "YOUR_GOOGLE_MAPS_API_KEY"; // Remplacez par votre clé API
+  const GOOGLE_MAPS_API_KEY = "YOUR_GOOGLE_MAPS_API_KEY"; // Replace with your API key
 
-  // Function to fetch route from Google Directions API
   const fetchRoute = async () => {
     setLoading(true);
     try {
-      const origin = "41.3861,2.1744"; // Point de départ (latitude,longitude)
-      const destination = "41.3860156,2.1774"; // Destination (latitude,longitude)
-      const waypoints = "41.3871,2.1754|41.3881,2.1764"; // Points intermédiaires (séparés par |)
+      const origin = "41.3861,2.1744"; // Start point (latitude, longitude)
+      const destination = "41.3860156,2.1774"; // End point
+      const waypoints = "41.3871,2.1754|41.3881,2.1764"; // Intermediate points
 
       const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}&waypoints=${waypoints}&key=${GOOGLE_MAPS_API_KEY}`;
-
       const response = await axios.get(url);
+
       if (response.data.routes.length) {
         const points = decodePolyline(
           response.data.routes[0].overview_polyline.points
@@ -43,7 +50,6 @@ export default function MainScreen() {
     setLoading(false);
   };
 
-  // Function to decode polyline
   const decodePolyline = (encoded) => {
     let points = [];
     let index = 0,
@@ -83,17 +89,24 @@ export default function MainScreen() {
 
   return (
     <View style={styles.container}>
-      {/* En-tête */}
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerText}>Collection Route</Text>
-        <Text style={styles.subHeaderText}>SCANIA 13</Text>
-        <Image
-          source={require("../../assets/account.png")}
-          style={styles.avatar}
-        />
+        <TouchableOpacity style={styles.navButton}>
+          <Text style={styles.navText}>Home</Text>
+        </TouchableOpacity>
+        <View>
+          <Text style={styles.headerText}>Collection Route</Text>
+          <Text style={styles.subHeaderText}>SCANIA 13</Text>
+        </View>
+        <TouchableOpacity onPress={() => setProfileModalVisible(true)}>
+          <Image
+            source={require("../../assets/account.png")}
+            style={styles.avatar}
+          />
+        </TouchableOpacity>
       </View>
 
-      {/* Carte */}
+      {/* Map */}
       <MapView
         style={styles.map}
         initialRegion={{
@@ -103,7 +116,7 @@ export default function MainScreen() {
           longitudeDelta: 0.0421,
         }}
       >
-        {/* Marqueurs */}
+        {/* Markers */}
         <Marker
           coordinate={{ latitude: 41.3861, longitude: 2.1744 }}
           title="Bin 1"
@@ -121,34 +134,71 @@ export default function MainScreen() {
           title="Bin 4"
         />
 
-        {/* Itinéraire */}
+        {/* Route Polyline */}
         {routeCoordinates.length > 0 && (
           <Polyline
             coordinates={routeCoordinates}
-            strokeColor="#0000FF" // Blue line
+            strokeColor="#0000FF"
             strokeWidth={3}
           />
         )}
       </MapView>
 
-      {/* Barre de navigation inférieure */}
+      {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navButton}>
-          <Text style={styles.navText}>Home</Text>
-        </TouchableOpacity>
         <TouchableOpacity
           style={styles.calculateButton}
           onPress={fetchRoute}
           disabled={loading}
         >
-          <Text style={styles.calculateText}>
-            {loading ? "Calculating..." : "Calculate Itinerary"}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navButton}>
-          <Text style={styles.navText}>Settings</Text>
+          {loading ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <Text style={styles.calculateText}>Calculate Itinerary</Text>
+          )}
         </TouchableOpacity>
       </View>
+
+      {/* Profile Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isProfileModalVisible}
+        onRequestClose={() => setProfileModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Profile</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Name"
+              value={profile.name}
+              onChangeText={(text) => setProfile({ ...profile, name: text })}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              value={profile.email}
+              onChangeText={(text) => setProfile({ ...profile, email: text })}
+            />
+            <TouchableOpacity
+              style={styles.settingsButton}
+              onPress={() => {
+                setProfileModalVisible(false);
+                navigation.navigate("Settings");
+              }}
+            >
+              <Text style={styles.settingsButtonText}>Settings</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setProfileModalVisible(false)}
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -195,11 +245,11 @@ const styles = StyleSheet.create({
   navButton: {
     flex: 1,
     alignItems: "center",
-    marginTop: -20,
   },
   navText: {
-    color: "#001F3F",
+    color: "white",
     fontSize: 16,
+    textAlign: "center",
   },
   calculateButton: {
     flex: 2,
@@ -213,5 +263,49 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
     fontSize: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    marginHorizontal: 20,
+    borderRadius: 8,
+    padding: 20,
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 20,
+  },
+  input: {
+    width: "100%",
+    padding: 10,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  settingsButton: {
+    backgroundColor: "#4F46E5",
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  settingsButtonText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  closeButton: {
+    backgroundColor: "#001F3F",
+    padding: 10,
+    borderRadius: 8,
+  },
+  closeButtonText: {
+    color: "white",
+    fontWeight: "bold",
   },
 });

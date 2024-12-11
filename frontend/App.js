@@ -5,6 +5,7 @@ import { createStackNavigator } from "@react-navigation/stack";
 import "react-native-gesture-handler";
 
 import MainScreen from "./src/screens/MainScreen";
+import SettingsScreen from "./src/screens/SettingsScreen";
 
 const Stack = createStackNavigator();
 
@@ -18,11 +19,8 @@ export default function App() {
           ...TransitionPresets.ModalFadeTransition,
         }}
       >
-        <Stack.Screen
-          name="Main"
-          component={MainScreen}
-          options={{ title: "Accueil" }}
-        />
+        <Stack.Screen name="Main" component={MainScreen} />
+        <Stack.Screen name="Settings" component={SettingsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
