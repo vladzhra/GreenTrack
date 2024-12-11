@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import axios from "axios";
+import { GOOGLE_MAPS_API_KEY } from "@env";
 
 export default function MainScreen({ navigation }) {
   const [routeCoordinates, setRouteCoordinates] = useState([]);
@@ -22,8 +23,7 @@ export default function MainScreen({ navigation }) {
     email: "johndoe@example.com",
   });
 
-  const GOOGLE_MAPS_API_KEY = "YOUR_GOOGLE_MAPS_API_KEY"; // Replace with your API key
-
+  // Function to fetch route from Google Directions API
   const fetchRoute = async () => {
     setLoading(true);
     try {
