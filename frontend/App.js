@@ -5,7 +5,7 @@ import { TransitionPresets } from "@react-navigation/stack";
 import { createStackNavigator } from "@react-navigation/stack";
 import "react-native-gesture-handler";
 
-import MainScreen from "./src/screens/MainScreen";
+import MainScreen from "./src/MainScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
 
 const Stack = createStackNavigator();
