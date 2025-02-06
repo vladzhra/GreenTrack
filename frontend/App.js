@@ -7,6 +7,7 @@ import "react-native-gesture-handler";
 
 import MainScreen from "./src/screens/MainScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
+import AllBins from "./src/screens/AllBins";
 
 const Stack = createStackNavigator();
 
@@ -22,6 +23,7 @@ export default function App() {
             ...TransitionPresets.ModalFadeTransition,
           }}
         >
+          <Stack.Screen name="AllBins" component={AllBins} />
           <Stack.Screen name="Main" component={MainScreen} />
           <Stack.Screen name="Settings" component={SettingsScreen} />
         </Stack.Navigator>

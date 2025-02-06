@@ -166,9 +166,7 @@ export default function MainScreen({ navigation }) {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-        // onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity onPress={() => navigation.goBack()}>
           <MaterialIcons name="arrow-back-ios-new" size={24} color="white" />
         </TouchableOpacity>
         <View>
@@ -236,6 +234,15 @@ export default function MainScreen({ navigation }) {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
+            <TouchableOpacity
+              style={styles.allBinsButton}
+              onPress={() => {
+                setProfileModalVisible(false);
+                navigation.navigate("AllBins");
+              }}
+            >
+              <MaterialIcons name="list" size={24} color="white" />
+            </TouchableOpacity>
             <Text style={styles.modalTitle}>Profile</Text>
             <Text style={styles.modalSubTitle}>Name: </Text>
             <TextInput
@@ -333,6 +340,14 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
+  },
+  allBinsButton: {
+    backgroundColor: "#4F46E5",
+    padding: 10,
+    borderRadius: 8,
+    position: "absolute",
+    top: 12,
+    left: 12,
   },
   bottomNav: {
     flexDirection: "row",
