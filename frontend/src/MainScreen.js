@@ -71,6 +71,7 @@ export default function MainScreen({ navigation }) {
   const [profile, setProfile] = useState({
     name: "John Doe",
     email: "johndoe@example.com",
+    startingPoint: "4 carrer de Sant Bertran, 08001 Barcelona",
   });
   const [bins, setBins] = useState(binsData);
 
@@ -98,7 +99,7 @@ export default function MainScreen({ navigation }) {
     }
   };
 
-  // Function to fetch the optimal route that starts/ends at Bin 1 and passes through every other bin
+  // Function to fetch the optimal route that starts/ends at your address and passes through every bin
   const fetchRoute = async () => {
     setLoading(true);
     try {
@@ -109,26 +110,23 @@ export default function MainScreen({ navigation }) {
         return;
       }
 
-      // Bin 1 is always the first bin in your bins array
-      const bin1 = bins[0];
-      const origin = `${bin1.latitude},${bin1.longitude}`;
-      const destination = origin; // End at Bin 1 as well
+      // Use the user's address from profile as the starting point.
+      // encodeURIComponent makes sure the address is URL safe.
+      const startingAddress = encodeURIComponent(profile.startingPoint);
+      const origin = startingAddress;
+      const destination = startingAddress; // End at the same address
 
-      // Collect coordinates for all bins except Bin 1
-      // If you have additional bins added dynamically, they will be included here
+      // Collect coordinates for all bins as waypoints
       const waypointCoordinates = bins
-        .slice(1)
         .map((bin) => `${bin.latitude},${bin.longitude}`)
         .join("|");
 
-      // Use "optimize:true" to let Google reorder the waypoints for the most efficient route.
-      // Only include the waypoints if there are any additional bins.
+      // Use "optimize:true" so Google reorders the waypoints for the optimal route.
       const waypoints = waypointCoordinates
         ? `optimize:true|${waypointCoordinates}`
         : "";
 
       // Build the URL for the Google Directions API request.
-      // If there are no waypoints (only Bin 1 exists) then the URL will simply have origin and destination.
       const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}${
         waypoints ? `&waypoints=${waypoints}` : ""
       }&key=${GOOGLE_MAPS_API_KEY}`;
@@ -196,8 +194,8 @@ export default function MainScreen({ navigation }) {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <MaterialIcons name="arrow-back-ios-new" size={24} color="white" />
+        <TouchableOpacity onPress={() => navigation.navigate("AllBins")}>
+          <MaterialIcons name="menu" size={24} color="white" />
         </TouchableOpacity>
         <View>
           <Text style={styles.headerText}>Collection Route</Text>
@@ -287,6 +285,15 @@ export default function MainScreen({ navigation }) {
               placeholder="Email"
               value={profile.email}
               onChangeText={(text) => setProfile({ ...profile, email: text })}
+            />
+            <Text style={styles.modalSubTitle}>Recycling station: </Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Recycling station"
+              value={profile.startingPoint}
+              onChangeText={(text) =>
+                setProfile({ ...profile, startingPoint: text })
+              }
             />
             <TouchableOpacity
               style={styles.closeButton}

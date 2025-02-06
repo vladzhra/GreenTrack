@@ -30,12 +30,12 @@ const App = () => {
         <Stack.Screen
           name="AllBins"
           component={AllBins}
-          options={{ title: "All Bins" }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="Settings"
           component={SettingsScreen}
-          options={{ title: "Settings" }}
+          options={{ headerShown: false }}
         />
       </Stack.Navigator>
     </NavigationContainer>

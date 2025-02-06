@@ -60,7 +60,7 @@ const AllBins = ({ navigation }) => {
     <View style={styles.container}>
       <Text style={styles.title}>All Bins</Text>
       <TouchableOpacity
-        onPress={() => navigation.navigate("Main")}
+        onPress={() => navigation.navigate("MainScreen")}
         style={{ position: "absolute", top: 50, left: 30 }}
       >
         <MaterialIcons name="arrow-back-ios-new" size={24} color="black" />
