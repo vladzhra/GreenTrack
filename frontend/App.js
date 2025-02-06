@@ -5,29 +5,41 @@ import { TransitionPresets } from "@react-navigation/stack";
 import { createStackNavigator } from "@react-navigation/stack";
 import "react-native-gesture-handler";
 
-import MainScreen from "./src/screens/MainScreen";
-import SettingsScreen from "./src/screens/SettingsScreen";
-import AllBins from "./src/screens/AllBins";
+import LoginScreen from "./src/LoginScreen";
+import MainScreen from "./src/MainScreen";
+import SettingsScreen from "./src/SettingsScreen";
+import AllBins from "./src/AllBins";
 
 const Stack = createStackNavigator();
 
-export default function App() {
+const App = () => {
   return (
-    <>
+    <NavigationContainer>
       <StatusBar barStyle="light-content" />
-      <NavigationContainer>
-        <Stack.Navigator
-          initialRouteName="Main"
-          screenOptions={{
-            headerShown: false,
-            ...TransitionPresets.ModalFadeTransition,
-          }}
-        >
-          <Stack.Screen name="AllBins" component={AllBins} />
-          <Stack.Screen name="Main" component={MainScreen} />
-          <Stack.Screen name="Settings" component={SettingsScreen} />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </>
+      <Stack.Navigator initialRouteName="LoginScreen">
+        <Stack.Screen
+          name="LoginScreen"
+          component={LoginScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="MainScreen"
+          component={MainScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="AllBins"
+          component={AllBins}
+          options={{ title: "All Bins" }}
+        />
+        <Stack.Screen
+          name="Settings"
+          component={SettingsScreen}
+          options={{ title: "Settings" }}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
-}
+};
+
+export default App;

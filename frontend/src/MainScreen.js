@@ -205,7 +205,7 @@ export default function MainScreen({ navigation }) {
         </View>
         <TouchableOpacity onPress={() => setProfileModalVisible(true)}>
           <Image
-            source={require("../../assets/account.png")}
+            source={require("../assets/account.png")}
             style={styles.avatar}
           />
         </TouchableOpacity>
