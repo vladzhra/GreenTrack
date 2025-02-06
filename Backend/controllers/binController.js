@@ -27,6 +27,10 @@ const getBinById = async (req, res) => {
 const createBin = async (req, res) => {
     try {
         const { name, address, fillLevel, latitude, longitude } = req.body;
+        const existingBin = await Bin.findOne({ where: { name } });
+        if (existingBin) {
+            return res.status(400).json({ message: 'A bin with this name already exists' });
+        }
         const newBin = await Bin.create({ name, address, fillLevel, latitude, longitude });
         res.status(201).json(newBin);
     } catch (error) {
