@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   View,
   Text,
@@ -10,7 +10,8 @@ import {
   TextInput,
   ActivityIndicator,
 } from "react-native";
-import MapView, { Marker, Polyline } from "react-native-maps";
+import MapView from "react-native-maps";
+import { Marker, Polyline } from "react-native-maps";
 import { MaterialIcons } from "@expo/vector-icons";
 import axios from "axios";
 import { GOOGLE_MAPS_API_KEY } from "@env";
@@ -176,7 +177,7 @@ export default function MainScreen({ navigation }) {
         </View>
         <TouchableOpacity onPress={() => setProfileModalVisible(true)}>
           <Image
-            source={require("../assets/account.png")}
+            source={require("../../assets/account.png")}
             style={styles.avatar}
           />
         </TouchableOpacity>
@@ -343,14 +344,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: "20%",
   },
-  navButton: {
-    alignItems: "center",
-  },
-  navText: {
-    color: "white",
-    fontSize: 16,
-    textAlign: "center",
-  },
   calculateButton: {
     flex: 2,
     backgroundColor: "#001F3F",
@@ -403,10 +396,6 @@ const styles = StyleSheet.create({
     padding: 7,
     borderRadius: 8,
     marginBottom: 10,
-  },
-  settingsButtonText: {
-    color: "white",
-    fontWeight: "bold",
   },
   closeButton: {
     backgroundColor: "#001F3F",
