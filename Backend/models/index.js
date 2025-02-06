@@ -11,5 +11,6 @@ async function initModels() {
 module.exports = {
     sequelize,
     User,
+    Bin,
     initModels
 };
