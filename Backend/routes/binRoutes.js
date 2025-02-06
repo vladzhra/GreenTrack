@@ -1,9 +1,13 @@
 const express = require('express');
-const { getBins, addBinData, optimizeRoutes } = require('../controllers/binController');
+const { getAllBins, getBinById, createBin, updateBin, deleteBin } = require('../controllers/binController');
+
 const router = express.Router();
 
-router.get('/', getBins);
-router.post('/', addBinData);
-router.get('/optimize', optimizeRoutes);
+// Routes CRUD pour les poubelles
+router.get('/', getAllBins);
+router.get('/:id', getBinById);
+router.post('/', createBin);
+router.put('/:id', updateBin);
+router.delete('/:id', deleteBin);
 
 module.exports = router;
