@@ -6,7 +6,7 @@ const router = express.Router();
 
 // Route protégée
 router.get('/', getAllUsers);
-router.get('/:id', getUserById);
+router.get('/:id', authenticateToken, getUserById);
 router.delete('/:id', deleteUser);
 router.put('/:id', updateUser);
 

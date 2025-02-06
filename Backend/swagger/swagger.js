@@ -7,9 +7,101 @@ const swaggerDoc = {
         version: '1.0.0',
         description: 'API for managing waste collection bins and user authentication',
     },
+    tags: [
+        {
+            name: 'Bins',
+            description: 'Operations related to waste bins',
+        },
+        {
+            name: 'Users',
+            description: 'Operations related to user management',
+        },
+        {
+            name: 'Authentification',
+            description: 'Operations related to user authentification',
+        },
+    ],
+    components: {
+        securitySchemes: {
+            bearerAuth: {
+                type: 'http',
+                scheme: 'bearer',
+                bearerFormat: 'JWT',
+            },
+        },
+    },
     paths: {
+        '/api/auth/register': {
+            post: {
+                tags: ['Authentification'],
+                summary: 'Register a new user',
+                requestBody: {
+                    required: true,
+                    content: {
+                        'application/json': {
+                            schema: {
+                                $ref: '#/components/schemas/UserRegister',
+                            },
+                        },
+                    },
+                },
+                responses: {
+                    '201': {
+                        description: 'User successfully registered',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    $ref: '#/components/schemas/User',
+                                },
+                            },
+                        },
+                    },
+                    '400': {
+                        description: 'User already exists',
+                    },
+                },
+            },
+        },
+        '/api/auth/login': {
+            post: {
+                tags: ['Authentification'],
+                summary: 'User login',
+                requestBody: {
+                    required: true,
+                    content: {
+                        'application/json': {
+                            schema: {
+                                $ref: '#/components/schemas/UserLogin',
+                            },
+                        },
+                    },
+                },
+                responses: {
+                    '200': {
+                        description: 'Login successful',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    type: 'object',
+                                    properties: {
+                                        token: {
+                                            type: 'string',
+                                            description: 'JWT token',
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    '400': {
+                        description: 'Invalid email or password',
+                    },
+                },
+            },
+        },
         '/api/bins': {
             get: {
+                tags: ['Bins'],
                 summary: 'Get all bins',
                 responses: {
                     '200': {
@@ -28,6 +120,7 @@ const swaggerDoc = {
                 },
             },
             post: {
+                tags: ['Bins'],
                 summary: 'Create a new bin',
                 requestBody: {
                     required: true,
@@ -55,6 +148,7 @@ const swaggerDoc = {
         },
         '/api/bins/{id}': {
             get: {
+                tags: ['Bins'],
                 summary: 'Get a bin by ID',
                 parameters: [
                     {
@@ -84,6 +178,7 @@ const swaggerDoc = {
                 },
             },
             put: {
+                tags: ['Bins'],
                 summary: 'Update a bin by ID',
                 parameters: [
                     {
@@ -123,6 +218,7 @@ const swaggerDoc = {
                 },
             },
             delete: {
+                tags: ['Bins'],
                 summary: 'Delete a bin by ID',
                 parameters: [
                     {
@@ -147,6 +243,7 @@ const swaggerDoc = {
         },
         '/api/users': {
             get: {
+                tags: ['Users'],
                 summary: 'Get all users',
                 responses: {
                     '200': {
@@ -167,7 +264,13 @@ const swaggerDoc = {
         },
         '/api/users/{id}': {
             get: {
+                tags: ['Users'],
                 summary: 'Get user by ID',
+                security: [
+                    {
+                        bearerAuth: [],
+                    }
+                ],
                 parameters: [
                     {
                         name: 'id',
@@ -196,7 +299,13 @@ const swaggerDoc = {
                 },
             },
             put: {
+                tags: ['Users'],
                 summary: 'Update a user by ID',
+                security: [
+                    {
+                        bearerAuth: [],
+                    }
+                ],
                 parameters: [
                     {
                         name: 'id',
@@ -235,7 +344,13 @@ const swaggerDoc = {
                 },
             },
             delete: {
+                tags: ['Users'],
                 summary: 'Delete a user by ID',
+                security: [
+                    {
+                        bearerAuth: [],
+                    }
+                ],
                 parameters: [
                     {
                         name: 'id',
