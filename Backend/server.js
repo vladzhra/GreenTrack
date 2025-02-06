@@ -1,29 +1,31 @@
+require('dotenv').config();
 const express = require('express');
-const dotenv = require('dotenv');
-
-dotenv.config();
+const cors = require('cors');
+const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
+const binRoutes = require('./routes/binRoutes');
+const { initModels } = require('./models');
+const { swaggerUi, specs } = require('./swagger/swagger');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(express.json());
+app.use(cors());
 
-// Database Connection
-const { connectDB } = require('./config/database');
-connectDB();
-
-// Routes
-const binRoutes = require('./routes/binRoutes');
-app.use('/api/bins', binRoutes);
-
-// Error Handling Middleware
-// const { errorHandler } = require('./middlewares/errorHandler');
-// app.use(errorHandler);
-
-const { swaggerUi, specs } = require('./swagger/swagger');
+// Configuration de Swagger
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+// Initialisation de la base de données
+initModels()
+    .then(() => console.log('Base de données initialisée'))
+    .catch((err) => console.error('Erreur lors de l\'initialisation de la base de données:', err));
+
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/bins', binRoutes);
+
+// Démarrage du serveur
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Serveur démarré sur le port ${PORT}`));
