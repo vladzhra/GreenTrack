@@ -15,6 +15,54 @@ import { MaterialIcons } from "@expo/vector-icons";
 import axios from "axios";
 import { GOOGLE_MAPS_API_KEY } from "@env";
 
+// Constante avec toutes les bins
+const binsData = [
+  { name: "Bin 1", latitude: 41.3861, longitude: 2.1744, fillPercentage: 75 },
+  {
+    name: "Bin 2",
+    latitude: 41.379443,
+    longitude: 2.188807,
+    fillPercentage: 50,
+  },
+  {
+    name: "Bin 3",
+    latitude: 41.403499,
+    longitude: 2.175391,
+    fillPercentage: 90,
+  },
+  {
+    name: "Bin 4",
+    latitude: 41.3860156,
+    longitude: 2.1774,
+    fillPercentage: 30,
+  },
+  { name: "Bin 5", latitude: 41.37724, longitude: 2.174436, fillPercentage: 0 },
+  {
+    name: "Bin 6",
+    latitude: 41.381185,
+    longitude: 2.166791,
+    fillPercentage: 0,
+  },
+  {
+    name: "Bin 7",
+    latitude: 41.384002,
+    longitude: 2.157982,
+    fillPercentage: 20,
+  },
+  {
+    name: "Bin 8",
+    latitude: 41.391047,
+    longitude: 2.194118,
+    fillPercentage: 100,
+  },
+  {
+    name: "Bin 9",
+    latitude: 41.397422,
+    longitude: 2.183468,
+    fillPercentage: 70,
+  },
+];
+
 export default function MainScreen({ navigation }) {
   const [routeCoordinates, setRouteCoordinates] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -23,12 +71,7 @@ export default function MainScreen({ navigation }) {
     name: "John Doe",
     email: "johndoe@example.com",
   });
-  const [bins, setBins] = useState([
-    { latitude: 41.3861, longitude: 2.1744, title: "Bin 1" },
-    { latitude: 41.3871, longitude: 2.1754, title: "Bin 2" },
-    { latitude: 41.3881, longitude: 2.1764, title: "Bin 3" },
-    { latitude: 41.3860156, longitude: 2.1774, title: "Bin 4" },
-  ]);
+  const [bins, setBins] = useState(binsData);
 
   const [isModalVisible, setModalVisible] = useState(false);
   const [newBin, setNewBin] = useState({
@@ -133,7 +176,7 @@ export default function MainScreen({ navigation }) {
         </View>
         <TouchableOpacity onPress={() => setProfileModalVisible(true)}>
           <Image
-            source={require("../../assets/account.png")}
+            source={require("../assets/account.png")}
             style={styles.avatar}
           />
         </TouchableOpacity>
@@ -150,25 +193,15 @@ export default function MainScreen({ navigation }) {
         }}
         onLongPress={handleLongPress}
       >
-        {/* Markers */}
-        <Marker
-          coordinate={{ latitude: 41.3861, longitude: 2.1744 }}
-          title="Bin 1"
-        />
-        <Marker
-          coordinate={{ latitude: 41.3871, longitude: 2.1754 }}
-          title="Bin 2"
-        />
-        <Marker
-          coordinate={{ latitude: 41.3881, longitude: 2.1764 }}
-          title="Bin 3"
-        />
-        <Marker
-          coordinate={{ latitude: 41.3860156, longitude: 2.1774 }}
-          title="Bin 4"
-        />
+        {bins.map((bin, index) => (
+          <Marker
+            key={index}
+            coordinate={{ latitude: bin.latitude, longitude: bin.longitude }}
+            title={bin.name}
+            description={`Fill: ${bin.fillPercentage}%`}
+          />
+        ))}
 
-        {/* Route Polyline */}
         {routeCoordinates.length > 0 && (
           <Polyline
             coordinates={routeCoordinates}

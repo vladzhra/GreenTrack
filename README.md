@@ -1,74 +1,74 @@
 # GreenTrack
 
-GreenTrack est une solution innovante pour optimiser la gestion des déchets urbains grâce à des technologies basées sur l'Intelligence Artificielle (IA) et l'Internet des Objets (IoT). Ce projet vise à réduire les coûts, améliorer l'efficacité de la collecte des déchets, et promouvoir un environnement plus propre.
+GreenTrack is an innovative solution to optimize urban waste management using technologies based on Artificial Intelligence (AI) and the Internet of Things (IoT). This project aims to reduce costs, improve the efficiency of waste collection, and promote a cleaner environment.
 
-## Fonctionnalités
+## Features
 
-- **Surveillance en temps réel** : Des capteurs installés sur les poubelles permettent de suivre le niveau de remplissage en temps réel.
-- **Optimisation des itinéraires** : Génération d'itinéraires efficaces pour réduire la consommation de carburant et le temps de collecte.
-- **Carte interactive** : Affiche les poubelles pleines et vides sur une carte pour une gestion facile.
-- **Notifications** : Alertes automatiques pour éviter le débordement des poubelles.
-- **Interface utilisateur intuitive** : Une application mobile avec une navigation simple et des données exploitables.
+- **Real-time monitoring**: Sensors installed on the bins allow to monitor the filling level in real time.
+- **Route optimization**: Generation of efficient routes to reduce fuel consumption and collection time.
+- **Interactive map**: Displays full and empty bins on a map for easy management.
+- **Notifications**: Automatic alerts to avoid overflowing bins.
+- **Intuitive user interface**: A mobile application with simple navigation and actionable data.
 
-## Technologies utilisées
+## Technologies used
 
 - **Frontend** : React Native
-- **Backend** : Node.js avec Express
-- **Base de données** : PostgreSQL
-- **Matériel** : Capteurs de distance HC-SR04, ESP32, batteries rechargeables
-- **Carte** : Bibliothèque `react-native-maps`
+- **Backend** : Node.js with Express
+- **Database** : PostgreSQL
+- **Hardware** : HC-SR04 distance sensors, ESP32, rechargeable batteries
+- **Map** : `react-native-maps` library
 
-## Installation et configuration
+## Installation and configuration
 
-### Prérequis
+### Prerequisites
 
-- Node.js installé sur votre machine
-- Expo CLI (si vous utilisez Expo) : `npm install -g expo-cli`
-- PostgreSQL pour la base de données
+- Node.js installed on your machine
+- Expo CLI (if you use Expo): `npm install -g expo-cli`
+- PostgreSQL for the database
 
 ### Installation
 
-1. Clonez ce dépôt :
+1. Clone this repository:
 
-   ```bash
-   git clone https://github.com/votre-repo/greentrack.git
-   cd greentrack
-   ```
+```bash
+git clone https://github.com/your-repo/greentrack.git
+cd greentrack
+```
 
-2. Installez les dépendances du projet :
+2. Install the project dependencies:
 
-   ```bash
-   npm install
-   ```
+```bash
+npm install
+```
 
-3. Lancez l'application mobile :
+3. Launch the mobile application:
 
-   ```bash
-   npx expo start --tunnel
-   ```
+```bash
+npx expo start --tunnel
+```
 
-4. Scanner le QR code avec l'application Expo Go sur votre téléphone.
+4. Scan the QR code with the Expo Go app on your phone.
 
-## Utilisation
+## Usage
 
-1. Ouvrez l'application mobile pour voir les poubelles sur la carte.
-2. Cliquez sur "Calculate Itinerary" pour générer l'itinéraire optimal.
-3. Recevez des notifications lorsque les poubelles approchent de leur capacité maximale.
+1. Open the mobile app to see the bins on the map.
+2. Click "Calculate Itinerary" to generate the optimal route.
+3. Get notified when the bins are nearing capacity.
 
-## Contribution
+## Contribute
 
-1. Fork ce dépôt.
-2. Créez une branche pour votre fonctionnalité : `git checkout -b feature/your-feature-name`
-3. Commitez vos modifications : `git commit -m 'Add some feature'`
-4. Poussez vos modifications : `git push origin feature/your-feature-name`
-5. Ouvrez une Pull Request.
+1. Fork this repository.
+2. Branch your feature: `git checkout -b feature/your-feature-name`
+3. Commit your changes: `git commit -m 'Add some feature'`
+4. Push your changes: `git push origin feature/your-feature-name`
+5. Open a Pull Request.
 
-## Équipe
+## Team
 
 - **Thomas Fiancette** - Hardware Manager
 - **Fred Tossou** - Hardware
-- **Mardochée Zossoungbo** - Backend
-- **Vlad Zaharia** - Leader Frontend
+- **Mordecai Zossoungbo** - Backend
+- **Vlad Zaharia** - Frontend Leader
 - **Lucas Palazuelo** - Frontend
-- **Vincent Ballandi** - Leader Backend
+- **Vincent Ballandi** - Backend Leader
 - **Mathias Ballot** - Hardware
