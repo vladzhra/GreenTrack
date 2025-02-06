@@ -98,23 +98,53 @@ export default function MainScreen({ navigation }) {
     }
   };
 
-  // Function to fetch route from Google Directions API
+  // Function to fetch the optimal route that starts/ends at Bin 1 and passes through every other bin
   const fetchRoute = async () => {
     setLoading(true);
     try {
-      const origin = "41.3861,2.1744"; // Start point (latitude, longitude)
-      const destination = "41.3860156,2.1774"; // End point
-      const waypoints = "41.3871,2.1754|41.3881,2.1764"; // Intermediate points
+      // Ensure there is at least one bin
+      if (bins.length === 0) {
+        Alert.alert("Error", "No bins available!");
+        setLoading(false);
+        return;
+      }
 
-      const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}&waypoints=${waypoints}&key=${GOOGLE_MAPS_API_KEY}`;
+      // Bin 1 is always the first bin in your bins array
+      const bin1 = bins[0];
+      const origin = `${bin1.latitude},${bin1.longitude}`;
+      const destination = origin; // End at Bin 1 as well
+
+      // Collect coordinates for all bins except Bin 1
+      // If you have additional bins added dynamically, they will be included here
+      const waypointCoordinates = bins
+        .slice(1)
+        .map((bin) => `${bin.latitude},${bin.longitude}`)
+        .join("|");
+
+      // Use "optimize:true" to let Google reorder the waypoints for the most efficient route.
+      // Only include the waypoints if there are any additional bins.
+      const waypoints = waypointCoordinates
+        ? `optimize:true|${waypointCoordinates}`
+        : "";
+
+      // Build the URL for the Google Directions API request.
+      // If there are no waypoints (only Bin 1 exists) then the URL will simply have origin and destination.
+      const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}${
+        waypoints ? `&waypoints=${waypoints}` : ""
+      }&key=${GOOGLE_MAPS_API_KEY}`;
+
       const response = await axios.get(url);
 
-      if (response.data.routes.length) {
+      if (response.data.routes && response.data.routes.length) {
+        // Decode the polyline returned by the API
         const points = decodePolyline(
           response.data.routes[0].overview_polyline.points
         );
         setRouteCoordinates(points);
-        Alert.alert("Itinerary Calculated", "Check the map for the route!");
+        Alert.alert(
+          "Itinerary Calculated",
+          "Check the map for the optimal route!"
+        );
       } else {
         Alert.alert("Error", "No route found!");
       }
