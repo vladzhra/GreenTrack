@@ -7,13 +7,31 @@ import {
   StyleSheet,
   Alert,
 } from "react-native";
+import axios from "axios";
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = () => {
-    // Add your login logic here
+  const handleLogin = async () => {
+    // try {
+    //   const response = await axios.post(`${URL}/api/auth/login`, {
+    //     email: email,
+    //     password: password,
+    //   });
+    //   console.log("Response Data:", response.data);
+    //   if (response.status === 200) {
+    //     Alert.alert("Login success");
+    //     navigation.navigate("MainScreen");
+    //   } else {
+    //     Alert.alert("Erreur", response.data.message || "Identifiants incorrects");
+    //   }
+    // } catch (error) {
+    //   console.error("Full Error:", error);
+    //   if (error.response) {
+    //     Alert.alert("Erreur", error.response.data.message || "Une erreur est survenue");
+    //   }
+    // }
     navigation.navigate("MainScreen");
   };
 
@@ -38,6 +56,15 @@ const LoginScreen = ({ navigation }) => {
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
+      <Text style={styles.bottomText}>
+        Pas de compte ?{" "}
+        <Text
+          style={styles.clickableText}
+          onPress={() => navigation.navigate("RegisterScreen")}
+        >
+          Inscrivez-vous ici
+        </Text>
+      </Text>
     </View>
   );
 };
@@ -73,6 +100,14 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  bottomText: {
+    marginTop: 20,
+    color: "#000",
+  },
+  clickableText: {
+    color: "#001F3F",
+    textDecorationLine: "underline",
   },
 });
 
