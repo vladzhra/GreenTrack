@@ -16,10 +16,21 @@ app.use(cors());
 // Configuration de Swagger
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
-// Initialisation de la base de données
-initModels()
-    .then(() => console.log('Base de données initialisée'))
-    .catch((err) => console.error('Erreur lors de l\'initialisation de la base de données:', err));
+app.get('/', (req, res) => {
+    res.send('API GreenTrack en cours d\'exécution 🚀');
+});
+
+function startServer() {
+    initModels()
+        .then(() => {
+            console.log('✅ Base de données initialisée');
+        })
+        .catch((err) => {
+            console.error('❌ Erreur lors de l\'initialisation de la base de données:', err);
+        });
+}
+
+startServer();
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -28,4 +39,4 @@ app.use('/api/bins', binRoutes);
 
 // Démarrage du serveur
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Serveur démarré sur le port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Serveur démarré sur http://localhost:${PORT}`));
