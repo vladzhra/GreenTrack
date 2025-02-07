@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { use, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -11,58 +11,60 @@ import {
   ActivityIndicator,
 } from "react-native";
 import MapView from "react-native-maps";
-import { Marker, Polyline } from "react-native-maps";
+import { Marker, Polyline, Callout } from "react-native-maps";
 import { MaterialIcons } from "@expo/vector-icons";
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import axios from "axios";
 import { GOOGLE_MAPS_API_KEY } from "@env";
+import { URL } from "@env";
 
 // Constante avec toutes les bins
-const binsData = [
-  { name: "Bin 1", latitude: 41.3861, longitude: 2.1744, fillPercentage: 75 },
-  {
-    name: "Bin 2",
-    latitude: 41.379443,
-    longitude: 2.188807,
-    fillPercentage: 50,
-  },
-  {
-    name: "Bin 3",
-    latitude: 41.403499,
-    longitude: 2.175391,
-    fillPercentage: 90,
-  },
-  {
-    name: "Bin 4",
-    latitude: 41.3860156,
-    longitude: 2.1774,
-    fillPercentage: 30,
-  },
-  { name: "Bin 5", latitude: 41.37724, longitude: 2.174436, fillPercentage: 0 },
-  {
-    name: "Bin 6",
-    latitude: 41.381185,
-    longitude: 2.166791,
-    fillPercentage: 0,
-  },
-  {
-    name: "Bin 7",
-    latitude: 41.384002,
-    longitude: 2.157982,
-    fillPercentage: 20,
-  },
-  {
-    name: "Bin 8",
-    latitude: 41.391047,
-    longitude: 2.194118,
-    fillPercentage: 100,
-  },
-  {
-    name: "Bin 9",
-    latitude: 41.397422,
-    longitude: 2.183468,
-    fillPercentage: 70,
-  },
-];
+// const binsData = [
+//   { name: "Bin 1", latitude: 41.3861, longitude: 2.1744, fillPercentage: 75 },
+//   {
+//     name: "Bin 2",
+//     latitude: 41.379443,
+//     longitude: 2.188807,
+//     fillPercentage: 50,
+//   },
+//   {
+//     name: "Bin 3",
+//     latitude: 41.403499,
+//     longitude: 2.175391,
+//     fillPercentage: 90,
+//   },
+//   {
+//     name: "Bin 4",
+//     latitude: 41.3860156,
+//     longitude: 2.1774,
+//     fillPercentage: 30,
+//   },
+//   { name: "Bin 5", latitude: 41.37724, longitude: 2.174436, fillPercentage: 0 },
+//   {
+//     name: "Bin 6",
+//     latitude: 41.381185,
+//     longitude: 2.166791,
+//     fillPercentage: 0,
+//   },
+//   {
+//     name: "Bin 7",
+//     latitude: 41.384002,
+//     longitude: 2.157982,
+//     fillPercentage: 20,
+//   },
+//   {
+//     name: "Bin 8",
+//     latitude: 41.391047,
+//     longitude: 2.194118,
+//     fillPercentage: 100,
+//   },
+//   {
+//     name: "Bin 9",
+//     latitude: 41.397422,
+//     longitude: 2.183468,
+//     fillPercentage: 70,
+//   },
+// ];
 
 export default function MainScreen({ navigation }) {
   const [routeCoordinates, setRouteCoordinates] = useState([]);
@@ -71,9 +73,9 @@ export default function MainScreen({ navigation }) {
   const [profile, setProfile] = useState({
     name: "John Doe",
     email: "johndoe@example.com",
-    startingPoint: "4 carrer de Sant Bertran, 08001 Barcelona",
+    startingPoint: "41.391038,2.194041" // epitech Barcelona
   });
-  const [bins, setBins] = useState(binsData);
+  const [bins, setBins] = useState([]);
 
   const [isModalVisible, setModalVisible] = useState(false);
   const [newBin, setNewBin] = useState({
@@ -81,6 +83,31 @@ export default function MainScreen({ navigation }) {
     longitude: null,
     title: "",
   });
+
+  // -------------------------------
+  // 1. Récupération initiale des positions et noms des bins
+  // -------------------------------
+  const fetchBinsInitial = async () => {
+    try {
+      const response = await axios.get(
+         `${URL}/api/bins`
+      );
+      // On attend que l'API renvoie un tableau d'objets contenant au moins { name, latitude, longitude, fillPercentage }
+      if (response.data && Array.isArray(response.data)) {
+        setBins(response.data);
+        console.log("Bins fetched:", response.data);
+      } else {
+        Alert.alert("Error", "Invalid data received from server!");
+      }
+    } catch (error) {
+      console.error("Error fetching bins positions:", error);
+      Alert.alert("Error", "Failed to fetch initial bins positions!");
+    }
+  };
+
+  useEffect(() => {
+    fetchBinsInitial();
+  }, []);
 
   const handleLongPress = (event) => {
     const { latitude, longitude } = event.nativeEvent.coordinate;
@@ -112,9 +139,9 @@ export default function MainScreen({ navigation }) {
 
       // Use the user's address from profile as the starting point.
       // encodeURIComponent makes sure the address is URL safe.
-      const startingAddress = encodeURIComponent(profile.startingPoint);
-      const origin = startingAddress;
-      const destination = startingAddress; // End at the same address
+      // const startingAddress = encodeURIComponent(profile.startingPoint);
+      const origin = "41.391038,2.194041";
+      const destination = "41.391038,2.194041"; // End at the same address
 
       // Collect coordinates for all bins as waypoints
       const waypointCoordinates = bins
@@ -132,7 +159,12 @@ export default function MainScreen({ navigation }) {
       }&key=${GOOGLE_MAPS_API_KEY}`;
 
       const response = await axios.get(url);
-
+      console.log("Google Directions API response:", response.data);
+      if (response.data.status !== "OK") {
+        Alert.alert("Erreur", `Directions API returned status: ${response.data.status}`);
+        setLoading(false);
+        return;
+      }
       if (response.data.routes && response.data.routes.length) {
         // Decode the polyline returned by the API
         const points = decodePolyline(
@@ -222,12 +254,26 @@ export default function MainScreen({ navigation }) {
       >
         {bins.map((bin, index) => (
           <Marker
-            key={index}
-            coordinate={{ latitude: bin.latitude, longitude: bin.longitude }}
-            title={bin.name}
-            description={`Fill: ${bin.fillPercentage}%`}
-          />
+          key={bin.name}
+          coordinate={{ latitude: bin.latitude, longitude: bin.longitude }}
+        >
+          <Callout>
+            <View style={{ width: 100, padding: 5, alignItems: "center", justifyContent: "center" }}>
+              <Text style={{ fontWeight: "bold", textAlign: "center" }}>{bin.name}</Text>
+              <Text style={{textAlign: "center"}}>Fill Level: {bin.fillLevel}%</Text>
+              {/* Vous pouvez ajouter d'autres informations ici */}
+            </View>
+          </Callout>
+        </Marker>
         ))}
+
+        <Marker
+          coordinate={{ latitude: 41.391038, longitude: 2.194041 }}
+          title="Recycling Station"
+          anchor={{ x: 0.5, y: 0.5 }}
+        >
+          <FontAwesome5 name="home" size={30} color="#000000FF" />
+        </Marker>
 
         {routeCoordinates.length > 0 && (
           <Polyline
