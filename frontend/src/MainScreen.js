@@ -1,4 +1,4 @@
-import { use, useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import axios from "axios";
 import { GOOGLE_MAPS_API_KEY } from "@env";
 import { URL } from "@env";
+import { BinsContext } from "./BinsContext";
 
 export default function MainScreen({ navigation }) {
   const [routeCoordinates, setRouteCoordinates] = useState([]);
@@ -30,7 +31,7 @@ export default function MainScreen({ navigation }) {
     startingPoint: "",
   });
   const [profileDraft, setProfileDraft] = useState(profile);
-  const [bins, setBins] = useState([]);
+  const { bins, setBins } = useContext(BinsContext);
   const [isModalVisible, setModalVisible] = useState(false);
   const [newBin, setNewBin] = useState({
     latitude: null,
@@ -38,9 +39,6 @@ export default function MainScreen({ navigation }) {
     title: "",
   });
 
-  // -------------------------------
-  // 1. Récupération initiale des positions et noms des bins
-  // -------------------------------
   const fetchBinsInitial = async () => {
     try {
       const response = await axios.get(
@@ -123,9 +121,6 @@ export default function MainScreen({ navigation }) {
         return;
       }
 
-      // Use the user's address from profile as the starting point.
-      // encodeURIComponent makes sure the address is URL safe.
-      // const startingAddress = encodeURIComponent(profile.startingPoint);
       const origin = profile.startingPoint; // Start at the same address
       const destination = profile.startingPoint; // End at the same address
 
@@ -283,9 +278,10 @@ export default function MainScreen({ navigation }) {
         onLongPress={handleLongPress}
       >
         {bins.map((bin, index) => (
-          <Marker
+        <Marker
           key={bin.name}
           coordinate={{ latitude: bin.latitude, longitude: bin.longitude }}
+          pinColor={bin.fillLevel >= 80 ? "red" : "green"}
         >
           <Callout>
             <View style={{ width: 100, padding: 5, alignItems: "center", justifyContent: "center" }}>
@@ -609,6 +605,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 10,
     backgroundColor: "transparent",
-  },
-  
+  },  
 });
