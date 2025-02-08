@@ -18,6 +18,7 @@ import axios from "axios";
 import { GOOGLE_MAPS_API_KEY } from "@env";
 import { URL } from "@env";
 import { BinsContext } from "./BinsContext";
+import { Linking } from "react-native";
 
 export default function MainScreen({ navigation }) {
   const [routeCoordinates, setRouteCoordinates] = useState([]);
@@ -151,6 +152,17 @@ export default function MainScreen({ navigation }) {
         const points = decodePolyline(
           response.data.routes[0].overview_polyline.points
         );
+        console.log("✅ Route decoded successfully !");
+
+        Alert.alert(
+          "Open Navigation",
+          "Choose your navigation app:",
+          [
+            { text: "Google Maps", onPress: openGoogleMapsWithOptimizedWaypoints },
+            { text: "Cancel", style: "cancel" }
+          ],
+          { cancelable: true }
+        );
         setRouteCoordinates(points);
         setDisplayRoute(true);
         Alert.alert(
@@ -242,6 +254,43 @@ export default function MainScreen({ navigation }) {
     setProfile(profileDraft);
     Alert.alert("Profile Saved", "Your profile modifications have been saved.");
     setProfileModalVisible(false);
+  };  
+
+  const openGoogleMapsWithOptimizedWaypoints = async () => {
+    // Assurez-vous que bins contient bien vos bins et que la réponse de l'API Directions est disponible
+    if (!bins || bins.length === 0) {
+      Alert.alert("Erreur", "Aucun bin disponible pour calculer l'itinéraire.");
+      return;
+    }
+    
+    // Construit le tableau d'origine des waypoints à partir des bins
+    const originalWaypoints = bins.map(bin => `${bin.latitude},${bin.longitude}`);
+    
+    // Supposons que vous avez déjà obtenu la réponse de l'API Directions (par exemple, dans une variable response)
+    // Ici, on simule la récupération de l'ordre optimisé depuis la réponse
+    const response = await axios.get(`https://maps.googleapis.com/maps/api/directions/json?origin=${profile.startingPoint}&destination=${profile.startingPoint}&waypoints=optimize:true|${originalWaypoints.join("|")}&key=${GOOGLE_MAPS_API_KEY}`);
+    
+    if (response.data.status !== "OK") {
+      Alert.alert("Erreur", `Directions API returned status: ${response.data.status}`);
+      return;
+    }
+    
+    const optimizedOrder = response.data.routes[0].waypoint_order;
+    const optimizedWaypoints = optimizedOrder.map(index => originalWaypoints[index]);
+    
+    const origin = profile.startingPoint;
+    const destination = profile.startingPoint;
+    const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&waypoints=${optimizedWaypoints.join("|")}&travelmode=driving&dir_action=navigate`;
+    
+    Linking.canOpenURL(googleMapsUrl)
+      .then((supported) => {
+        if (supported) {
+          Linking.openURL(googleMapsUrl);
+        } else {
+          Alert.alert("Erreur", "Google Maps n'est pas disponible sur cet appareil.");
+        }
+      })
+      .catch((err) => console.error("Erreur lors de l'ouverture de Google Maps:", err));
   };  
 
   return (
