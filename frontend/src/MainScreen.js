@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useContext } from "react";
 import {
   View,
   Text,
@@ -11,76 +11,87 @@ import {
   ActivityIndicator,
 } from "react-native";
 import MapView from "react-native-maps";
-import { Marker, Polyline } from "react-native-maps";
+import { Marker, Polyline, Callout } from "react-native-maps";
 import { MaterialIcons } from "@expo/vector-icons";
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import axios from "axios";
 import { GOOGLE_MAPS_API_KEY } from "@env";
-
-// Constante avec toutes les bins
-const binsData = [
-  { name: "Bin 1", latitude: 41.3861, longitude: 2.1744, fillPercentage: 75 },
-  {
-    name: "Bin 2",
-    latitude: 41.379443,
-    longitude: 2.188807,
-    fillPercentage: 50,
-  },
-  {
-    name: "Bin 3",
-    latitude: 41.403499,
-    longitude: 2.175391,
-    fillPercentage: 90,
-  },
-  {
-    name: "Bin 4",
-    latitude: 41.3860156,
-    longitude: 2.1774,
-    fillPercentage: 30,
-  },
-  { name: "Bin 5", latitude: 41.37724, longitude: 2.174436, fillPercentage: 0 },
-  {
-    name: "Bin 6",
-    latitude: 41.381185,
-    longitude: 2.166791,
-    fillPercentage: 0,
-  },
-  {
-    name: "Bin 7",
-    latitude: 41.384002,
-    longitude: 2.157982,
-    fillPercentage: 20,
-  },
-  {
-    name: "Bin 8",
-    latitude: 41.391047,
-    longitude: 2.194118,
-    fillPercentage: 100,
-  },
-  {
-    name: "Bin 9",
-    latitude: 41.397422,
-    longitude: 2.183468,
-    fillPercentage: 70,
-  },
-];
+import { URL } from "@env";
+import { BinsContext } from "./BinsContext";
 
 export default function MainScreen({ navigation }) {
   const [routeCoordinates, setRouteCoordinates] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [displayRoute, setDisplayRoute] = useState(false);
   const [isProfileModalVisible, setProfileModalVisible] = useState(false);
   const [profile, setProfile] = useState({
     name: "John Doe",
     email: "johndoe@example.com",
-    startingPoint: "4 carrer de Sant Bertran, 08001 Barcelona",
+    stationAdress: "Carrer de Joan Miró, 21, Sant Martí, 08005 Barcelona",
+    startingPoint: "",
   });
-  const [bins, setBins] = useState(binsData);
-
+  const [profileDraft, setProfileDraft] = useState(profile);
+  const { bins, setBins } = useContext(BinsContext);
   const [isModalVisible, setModalVisible] = useState(false);
   const [newBin, setNewBin] = useState({
     latitude: null,
     longitude: null,
     title: "",
   });
+
+  const fetchBinsInitial = async () => {
+    try {
+      const response = await axios.get(
+         `${URL}/api/bins`
+      );
+      // On attend que l'API renvoie un tableau d'objets contenant au moins { name, latitude, longitude, fillPercentage }
+      if (response.data && Array.isArray(response.data)) {
+        setBins(response.data);
+        console.log("✅ Initial bins positions fetched successfully!");
+      } else {
+        Alert.alert("Error", "Invalid data received from server!");
+      }
+    } catch (error) {
+      console.error("Error fetching bins positions:", error);
+      Alert.alert("Error", "Failed to fetch initial bins positions!");
+    }
+  };
+
+  const geocodeAddress = async (address) => {
+    try {
+      const encodedAddress = encodeURIComponent(address);
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&key=${GOOGLE_MAPS_API_KEY}`;
+      
+      const response = await axios.get(url);
+      if (response.data.status === "OK") {
+        // Supposons que le premier résultat est le plus pertinent
+        const location = response.data.results[0].geometry.location;
+        console.log("✅ Call to Geocoding API successful !");
+        return {
+          latitude: location.lat,
+          longitude: location.lng,
+        };
+      } else {
+        console.error("Geocoding error:", response.data.status);
+        return null;
+      }
+    } catch (error) {
+      console.error("Error in geocoding:", error);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    fetchBinsInitial();
+    geocodeAddress(profile.stationAdress).then((coords) => {
+      if (coords) {
+        // Utilisez les coordonnées pour modifier le startingPoint du profil
+        setProfile({ ...profile, startingPoint: `${coords.latitude},${coords.longitude}` });
+      } else {
+        console.log("Erreur lors de la géocodification");
+      }
+    });
+  }, []);
 
   const handleLongPress = (event) => {
     const { latitude, longitude } = event.nativeEvent.coordinate;
@@ -110,11 +121,8 @@ export default function MainScreen({ navigation }) {
         return;
       }
 
-      // Use the user's address from profile as the starting point.
-      // encodeURIComponent makes sure the address is URL safe.
-      const startingAddress = encodeURIComponent(profile.startingPoint);
-      const origin = startingAddress;
-      const destination = startingAddress; // End at the same address
+      const origin = profile.startingPoint; // Start at the same address
+      const destination = profile.startingPoint; // End at the same address
 
       // Collect coordinates for all bins as waypoints
       const waypointCoordinates = bins
@@ -132,13 +140,19 @@ export default function MainScreen({ navigation }) {
       }&key=${GOOGLE_MAPS_API_KEY}`;
 
       const response = await axios.get(url);
-
+      console.log("✅ Call to Directions API successful !");
+      if (response.data.status !== "OK") {
+        Alert.alert("Erreur", `Directions API returned status: ${response.data.status}`);
+        setLoading(false);
+        return;
+      }
       if (response.data.routes && response.data.routes.length) {
         // Decode the polyline returned by the API
         const points = decodePolyline(
           response.data.routes[0].overview_polyline.points
         );
         setRouteCoordinates(points);
+        setDisplayRoute(true);
         Alert.alert(
           "Itinerary Calculated",
           "Check the map for the optimal route!"
@@ -190,6 +204,46 @@ export default function MainScreen({ navigation }) {
     return points;
   };
 
+  const handleRefresh = async () => {
+    setLoading(true);
+    try {
+      // 1. Recharger les bins depuis l'API
+      await fetchBinsInitial();
+  
+      // 2. Recalculer la position de la maison via geocodeAddress
+      const coords = await geocodeAddress(profile.stationAdress);
+      if (coords) {
+        setProfile({ ...profile, startingPoint: `${coords.latitude},${coords.longitude}` });
+      } else {
+        Alert.alert("Erreur", "Impossible de géocoder l'adresse de la maison");
+      }
+  
+      // 3. Réinitialiser l'itinéraire pour forcer l'utilisateur à appuyer sur "Calculate Itinerary"
+      setRouteCoordinates([]);
+      setDisplayRoute(false);
+    } catch (error) {
+      console.error("Erreur dans le refresh :", error);
+    }
+    setLoading(false);
+  };  
+
+  // Gestion du bouton "Calculate Itinerary / Toggle Itinerary"
+  const handleItineraryButtonPress = async () => {
+    // Si aucun itinéraire n'est encore calculé, lance la requête et affiche l'itinéraire immédiatement.
+    if (routeCoordinates.length === 0) {
+      await fetchRoute();
+    } else {
+      // Sinon, bascule l'affichage de l'itinéraire
+      setDisplayRoute(!displayRoute);
+    }
+  };
+
+  const handleSaveProfile = () => {
+    setProfile(profileDraft);
+    Alert.alert("Profile Saved", "Your profile modifications have been saved.");
+    setProfileModalVisible(false);
+  };  
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -201,7 +255,10 @@ export default function MainScreen({ navigation }) {
           <Text style={styles.headerText}>Collection Route</Text>
           <Text style={styles.subHeaderText}>SCANIA 13</Text>
         </View>
-        <TouchableOpacity onPress={() => setProfileModalVisible(true)}>
+        <TouchableOpacity onPress={() => {
+          setProfileDraft(profile);
+          setProfileModalVisible(true);
+        }}>
           <Image
             source={require("../assets/account.png")}
             style={styles.avatar}
@@ -221,15 +278,33 @@ export default function MainScreen({ navigation }) {
         onLongPress={handleLongPress}
       >
         {bins.map((bin, index) => (
-          <Marker
-            key={index}
-            coordinate={{ latitude: bin.latitude, longitude: bin.longitude }}
-            title={bin.name}
-            description={`Fill: ${bin.fillPercentage}%`}
-          />
+        <Marker
+          key={bin.name}
+          coordinate={{ latitude: bin.latitude, longitude: bin.longitude }}
+          pinColor={bin.fillLevel >= 80 ? "red" : "green"}
+        >
+          <Callout>
+            <View style={{ width: 100, padding: 5, alignItems: "center", justifyContent: "center" }}>
+              <Text style={{ fontWeight: "bold", textAlign: "center" }}>{bin.name}</Text>
+              <Text style={{textAlign: "center"}}>Fill Level: {bin.fillLevel}%</Text>
+              {/* Vous pouvez ajouter d'autres informations ici */}
+            </View>
+          </Callout>
+        </Marker>
         ))}
 
-        {routeCoordinates.length > 0 && (
+        <Marker
+          coordinate={{
+            latitude: parseFloat(profile.startingPoint.split(',')[0]),
+            longitude: parseFloat(profile.startingPoint.split(',')[1])
+          }}
+          title="Recycling Station"
+          anchor={{ x: 0.5, y: 0.5 }}
+        >
+          <FontAwesome5 name="home" size={30} color="#000000FF" />
+        </Marker>
+
+        {displayRoute && routeCoordinates.length > 0 && (
           <Polyline
             coordinates={routeCoordinates}
             strokeColor="#0000FF"
@@ -242,13 +317,31 @@ export default function MainScreen({ navigation }) {
       <View style={styles.bottomNav}>
         <TouchableOpacity
           style={styles.calculateButton}
-          onPress={fetchRoute}
+          onPress={handleItineraryButtonPress}
           disabled={loading}
         >
           {loading ? (
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
-            <Text style={styles.calculateText}>Calculate Itinerary</Text>
+            <Text style={styles.calculateText}>
+              {routeCoordinates.length === 0
+                ? "Calculate Itinerary"
+                : displayRoute
+                ? "Hide Itinerary"
+                : "Display Itinerary"}
+            </Text>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.refreshIconButton}
+          onPress={handleRefresh}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <FontAwesome5 name="sync-alt" size={32} color="#001F3F" />
           )}
         </TouchableOpacity>
       </View>
@@ -276,31 +369,37 @@ export default function MainScreen({ navigation }) {
             <TextInput
               style={styles.input}
               placeholder="Name"
-              value={profile.name}
-              onChangeText={(text) => setProfile({ ...profile, name: text })}
+              value={profileDraft.name}
+              onChangeText={(text) => setProfileDraft({ ...profileDraft, name: text })}
             />
             <Text style={styles.modalSubTitle}>Email: </Text>
             <TextInput
               style={styles.input}
               placeholder="Email"
-              value={profile.email}
-              onChangeText={(text) => setProfile({ ...profile, email: text })}
+              value={profileDraft.email}
+              onChangeText={(text) => setProfileDraft({ ...profileDraft, email: text })}
             />
             <Text style={styles.modalSubTitle}>Recycling station: </Text>
             <TextInput
               style={styles.input}
               placeholder="Recycling station"
-              value={profile.startingPoint}
-              onChangeText={(text) =>
-                setProfile({ ...profile, startingPoint: text })
-              }
+              value={profileDraft.stationAdress}
+              onChangeText={(text) => setProfileDraft({ ...profileDraft, stationAdress: text })}
             />
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setProfileModalVisible(false)}
-            >
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setProfileModalVisible(false)}
+              >
+                <Text style={styles.closeButtonText}>Close</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.saveButton}
+                onPress={handleSaveProfile}
+              >
+                <Text style={styles.saveButtonText}>Save</Text>
+              </TouchableOpacity>
+            </View>
             <TouchableOpacity
               style={styles.settingsButton}
               onPress={() => {
@@ -385,30 +484,21 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 12,
     left: 12,
-  },
-  bottomNav: {
-    flexDirection: "row",
-    backgroundColor: "#FFFFFF",
-    borderTopWidth: 1,
-    borderTopColor: "#E0E0E0",
-    height: 100,
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: "20%",
-  },
+  },   
   calculateButton: {
-    flex: 2,
     backgroundColor: "#001F3F",
-    padding: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
     borderRadius: 8,
-    marginTop: -20,
+    marginTop: 0,
     alignItems: "center",
+    height: 50,
   },
   calculateText: {
     color: "white",
     fontWeight: "bold",
-    fontSize: 16,
-  },
+    fontSize: 18,
+  },  
   modalOverlay: {
     flex: 1,
     justifyContent: "center",
@@ -458,6 +548,16 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
   },
+  saveButton: {
+    backgroundColor: "#5cb85c",
+    padding: 10,
+    borderRadius: 8,
+    marginLeft: 10,
+  },
+  saveButtonText: {
+    color: "white",
+    fontWeight: "bold",
+  },  
   modalActions: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -486,4 +586,24 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
   },
+  bottomNav: {
+    position: "relative",
+    height: 100,
+    backgroundColor: "#FFFFFF",
+    borderTopWidth: 1,
+    borderTopColor: "#E0E0E0",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  refreshIconButton: {
+    position: "absolute",
+    right: 20,
+    top: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 10,
+    backgroundColor: "transparent",
+  },  
 });

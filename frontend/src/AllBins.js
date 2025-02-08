@@ -7,55 +7,12 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-
-const binsData = [
-  { name: "Bin 1", latitude: 41.3861, longitude: 2.1744, fillPercentage: 75 },
-  {
-    name: "Bin 2",
-    latitude: 41.379443,
-    longitude: 2.188807,
-    fillPercentage: 50,
-  },
-  {
-    name: "Bin 3",
-    latitude: 41.403499,
-    longitude: 2.175391,
-    fillPercentage: 90,
-  },
-  {
-    name: "Bin 4",
-    latitude: 41.3860156,
-    longitude: 2.1774,
-    fillPercentage: 30,
-  },
-  { name: "Bin 5", latitude: 41.37724, longitude: 2.174436, fillPercentage: 0 },
-  {
-    name: "Bin 6",
-    latitude: 41.381185,
-    longitude: 2.166791,
-    fillPercentage: 0,
-  },
-  {
-    name: "Bin 7",
-    latitude: 41.384002,
-    longitude: 2.157982,
-    fillPercentage: 20,
-  },
-  {
-    name: "Bin 8",
-    latitude: 41.391047,
-    longitude: 2.194118,
-    fillPercentage: 100,
-  },
-  {
-    name: "Bin 9",
-    latitude: 41.397422,
-    longitude: 2.183468,
-    fillPercentage: 70,
-  },
-];
+import { useContext } from "react";
+import { BinsContext } from "./BinsContext";
 
 const AllBins = ({ navigation }) => {
+  const { bins } = useContext(BinsContext);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>All Bins</Text>
@@ -66,16 +23,19 @@ const AllBins = ({ navigation }) => {
         <MaterialIcons name="arrow-back-ios-new" size={24} color="black" />
       </TouchableOpacity>
       <FlatList
-        data={binsData}
+        data={bins}
         keyExtractor={(item) => item.name}
         renderItem={({ item }) => (
           <View style={styles.binItem}>
             <Text style={styles.binName}>{item.name}</Text>
+            <Text style={styles.binAdress}>
+              Adress: {item.adress}
+            </Text>
             <Text style={styles.binDetails}>
               Latitude: {item.latitude}, Longitude: {item.longitude}
             </Text>
             <Text style={styles.binDetails}>
-              Fill Percentage: {item.fillPercentage}%
+              Fill Percentage: {item.fillLevel}%
             </Text>
           </View>
         )}

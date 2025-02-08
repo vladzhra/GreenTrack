@@ -9,35 +9,42 @@ import {
 } from "react-native";
 import axios from "axios";
 
-const LoginScreen = ({ navigation }) => {
+const RegisterScreen = ({ navigation }) => {
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = async () => {
-    // try {
-    //   const response = await axios.post(`${URL}/api/auth/login`, {
-    //     email: email,
-    //     password: password,
-    //   });
-    //   console.log("Response Data:", response.data);
-    //   if (response.status === 200) {
-    //     Alert.alert("Login success");
-    //     navigation.navigate("MainScreen");
-    //   } else {
-    //     Alert.alert("Erreur", response.data.message || "Identifiants incorrects");
-    //   }
-    // } catch (error) {
-    //   console.error("Full Error:", error);
-    //   if (error.response) {
-    //     Alert.alert("Erreur", error.response.data.message || "Une erreur est survenue");
-    //   }
-    // }
-    navigation.navigate("MainScreen");
+  const handleRegister = async () => {
+    try {
+      const response = await axios.post(`${URL}/api/auth/register`, {
+        username: username,
+        email: email,
+        password: password,
+      });
+      console.log("Response Data:", response.data);
+      if (response.status === 200) {
+        Alert.alert("Register success");
+        navigation.navigate("MainScreen");
+      } else {
+        Alert.alert("Erreur", response.data.message || "Identifiants incorrects");
+      }
+    } catch (error) {
+      console.error("Full Error:", error);
+      if (error.response) {
+        Alert.alert("Erreur", error.response.data.message || "Une erreur est survenue");
+      }
+    }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
+      <Text style={styles.title}>Register</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Username"
+        value={username}
+        onChangeText={setUsername}
+      />
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -53,16 +60,16 @@ const LoginScreen = ({ navigation }) => {
         onChangeText={setPassword}
         secureTextEntry
       />
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Login</Text>
+      <TouchableOpacity style={styles.button} onPress={handleRegister}>
+        <Text style={styles.buttonText}>Register</Text>
       </TouchableOpacity>
       <Text style={styles.bottomText}>
-        Pas de compte ?{" "}
+        Vous avez déjà un compte ?{" "}
         <Text
           style={styles.clickableText}
-          onPress={() => navigation.navigate("RegisterScreen")}
+          onPress={() => navigation.navigate("LoginScreen")}
         >
-          Inscrivez-vous ici
+          Connectez-vous ici
         </Text>
       </Text>
     </View>
@@ -111,4 +118,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LoginScreen;
+export default RegisterScreen;
