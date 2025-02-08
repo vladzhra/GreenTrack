@@ -1,10 +1,10 @@
 Capstone :
 
-link back->front
-ajouter maison pour faire le centre de trie
-ajouter un level et changer la couleur du marqueur au poubelle avec une bar qui change de couleur en fonction du level de la poubelle
-login page, register
+link back->front ✅
+ajouter maison pour faire le centre de trie ✅
+ajouter un level et changer la couleur du marqueur au poubelle avec une bar qui change de couleur en fonction du level de la poubelle 
+login page, register ✅
 corriger params
 faire en sorte que le camion passe que par les poubelles remplies à 80% ou plus
-link all bins au back sans refaire un call api
+link all bins au back sans refaire un call api ✅
 regler le probleme du calculate itinerary (besoin d'appuyer 2 fois)
