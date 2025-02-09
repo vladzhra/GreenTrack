@@ -8,6 +8,7 @@ import {
   Alert,
 } from "react-native";
 import axios from "axios";
+import { URL } from "@env";
 
 const RegisterScreen = ({ navigation }) => {
   const [username, setUsername] = useState("");
@@ -21,10 +22,9 @@ const RegisterScreen = ({ navigation }) => {
         email: email,
         password: password,
       });
-      console.log("Response Data:", response.data);
       if (response.status === 200) {
         Alert.alert("Register success");
-        navigation.navigate("MainScreen");
+        navigation.navigate("LoginScreen");
       } else {
         Alert.alert("Erreur", response.data.message || "Identifiants incorrects");
       }

@@ -19,6 +19,7 @@ import { GOOGLE_MAPS_API_KEY } from "@env";
 import { URL } from "@env";
 import { BinsContext } from "./BinsContext";
 import { Linking } from "react-native";
+import getToken from "./Token";
 
 export default function MainScreen({ navigation }) {
   const [routeCoordinates, setRouteCoordinates] = useState([]);
@@ -26,12 +27,11 @@ export default function MainScreen({ navigation }) {
   const [displayRoute, setDisplayRoute] = useState(false);
   const [isProfileModalVisible, setProfileModalVisible] = useState(false);
   const [profile, setProfile] = useState({
-    name: "John Doe",
-    email: "johndoe@example.com",
-    stationAdress: "Carrer de Joan Miró, 21, Sant Martí, 08005 Barcelona",
+    name: "",
+    email: "",
+    stationAdress: "",
     startingPoint: "",
   });
-  const [profileDraft, setProfileDraft] = useState(profile);
   const { bins, setBins } = useContext(BinsContext);
   const [isModalVisible, setModalVisible] = useState(false);
   const [newBin, setNewBin] = useState({
@@ -42,6 +42,7 @@ export default function MainScreen({ navigation }) {
 
   const fetchBinsInitial = async () => {
     try {
+      console.log("🔄 Fetching initial bins positions...");
       const response = await axios.get(
          `${URL}/api/bins`
       );
@@ -63,6 +64,7 @@ export default function MainScreen({ navigation }) {
       const encodedAddress = encodeURIComponent(address);
       const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&key=${GOOGLE_MAPS_API_KEY}`;
       
+      console.log("🔄 Calling Geocoding API...");
       const response = await axios.get(url);
       if (response.data.status === "OK") {
         // Supposons que le premier résultat est le plus pertinent
@@ -82,16 +84,48 @@ export default function MainScreen({ navigation }) {
     }
   };
 
+  const fetchUserInfo = async () => {
+    try {
+      const token = await getToken();
+      if (!token) {
+        Alert.alert("Erreur", "Vous devez vous connecter.");
+        return;
+      }
+
+      console.log("🔄 Récupération des informations utilisateur...");
+      const response = await axios.get(`${URL}/api/users/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 200) {
+        // Mettre à jour le profil avec les informations récupérées
+        setProfile({...profile, name: response.data.username, email: response.data.email});
+        console.log("✅ Informations utilisateur récupérées avec succès !");
+      } else {
+        Alert.alert("Erreur", response.data.message || "Une erreur est survenue");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des informations utilisateur :", error);
+      Alert.alert("Erreur", "Une erreur est survenue lors de la récupération des informations utilisateur.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchBinsInitial();
-    geocodeAddress(profile.stationAdress).then((coords) => {
-      if (coords) {
-        // Utilisez les coordonnées pour modifier le startingPoint du profil
-        setProfile({ ...profile, startingPoint: `${coords.latitude},${coords.longitude}` });
-      } else {
-        console.log("Erreur lors de la géocodification");
-      }
-    });
+    fetchUserInfo();
+    if (profile.stationAdress)
+      geocodeAddress(profile.stationAdress).then((coords) => {
+        if (coords) {
+          // Utilisez les coordonnées pour modifier le startingPoint du profil
+          setProfile({ ...profile, startingPoint: `${coords.latitude},${coords.longitude}` });
+        } else {
+          console.log("❌ Erreur lors de la géocodification");
+        }
+      });
   }, []);
 
   const handleLongPress = (event) => {
@@ -139,7 +173,8 @@ export default function MainScreen({ navigation }) {
       const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}${
         waypoints ? `&waypoints=${waypoints}` : ""
       }&key=${GOOGLE_MAPS_API_KEY}`;
-
+      
+      console.log("🔄 Calling Directions API...");
       const response = await axios.get(url);
       console.log("✅ Call to Directions API successful !");
       if (response.data.status !== "OK") {
@@ -221,18 +256,22 @@ export default function MainScreen({ navigation }) {
     try {
       // 1. Recharger les bins depuis l'API
       await fetchBinsInitial();
-  
+
+      await fetchUserInfo();
+
       // 2. Recalculer la position de la maison via geocodeAddress
-      const coords = await geocodeAddress(profile.stationAdress);
-      if (coords) {
-        setProfile({ ...profile, startingPoint: `${coords.latitude},${coords.longitude}` });
-      } else {
-        Alert.alert("Erreur", "Impossible de géocoder l'adresse de la maison");
+      if (profile.stationAdress) {
+        const coords = await geocodeAddress(profile.stationAdress);
+        if (coords) {
+          setProfile({ ...profile, startingPoint: `${coords.latitude},${coords.longitude}` });
+        } else {
+          Alert.alert("Erreur", "Impossible de géocoder l'adresse de la maison");
+        }
+    
+        // 3. Réinitialiser l'itinéraire pour forcer l'utilisateur à appuyer sur "Calculate Itinerary"
+        setRouteCoordinates([]);
+        setDisplayRoute(false);
       }
-  
-      // 3. Réinitialiser l'itinéraire pour forcer l'utilisateur à appuyer sur "Calculate Itinerary"
-      setRouteCoordinates([]);
-      setDisplayRoute(false);
     } catch (error) {
       console.error("Erreur dans le refresh :", error);
     }
@@ -251,7 +290,8 @@ export default function MainScreen({ navigation }) {
   };
 
   const handleSaveProfile = () => {
-    setProfile(profileDraft);
+    setProfile(profile);
+    console.log("✅ Profile saved:", profile);
     Alert.alert("Profile Saved", "Your profile modifications have been saved.");
     setProfileModalVisible(false);
   };  
@@ -282,9 +322,11 @@ export default function MainScreen({ navigation }) {
     const destination = profile.startingPoint;
     const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&waypoints=${optimizedWaypoints.join("|")}&travelmode=driving&dir_action=navigate`;
     
+    console.log("🔄 Opening Google Maps with optimized waypoints...");
     Linking.canOpenURL(googleMapsUrl)
       .then((supported) => {
         if (supported) {
+          console.log("✅ Opening Google Maps...");
           Linking.openURL(googleMapsUrl);
         } else {
           Alert.alert("Erreur", "Google Maps n'est pas disponible sur cet appareil.");
@@ -305,7 +347,6 @@ export default function MainScreen({ navigation }) {
           <Text style={styles.subHeaderText}>SCANIA 13</Text>
         </View>
         <TouchableOpacity onPress={() => {
-          setProfileDraft(profile);
           setProfileModalVisible(true);
         }}>
           <Image
@@ -418,22 +459,22 @@ export default function MainScreen({ navigation }) {
             <TextInput
               style={styles.input}
               placeholder="Name"
-              value={profileDraft.name}
-              onChangeText={(text) => setProfileDraft({ ...profileDraft, name: text })}
+              value={profile.name}
+              onChangeText={(text) => setProfile({ ...profile, name: text })}
             />
             <Text style={styles.modalSubTitle}>Email: </Text>
             <TextInput
               style={styles.input}
               placeholder="Email"
-              value={profileDraft.email}
-              onChangeText={(text) => setProfileDraft({ ...profileDraft, email: text })}
+              value={profile.email}
+              onChangeText={(text) => setProfile({ ...profile, email: text })}
             />
             <Text style={styles.modalSubTitle}>Recycling station: </Text>
             <TextInput
               style={styles.input}
               placeholder="Recycling station"
-              value={profileDraft.stationAdress}
-              onChangeText={(text) => setProfileDraft({ ...profileDraft, stationAdress: text })}
+              value={profile.stationAdress}
+              onChangeText={(text) => setProfile({ ...profile, stationAdress: text })}
             />
             <View style={styles.modalActions}>
               <TouchableOpacity

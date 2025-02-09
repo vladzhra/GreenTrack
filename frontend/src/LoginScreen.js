@@ -8,31 +8,37 @@ import {
   Alert,
 } from "react-native";
 import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { URL } from "@env";
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleLogin = async () => {
-    // try {
-    //   const response = await axios.post(`${URL}/api/auth/login`, {
-    //     email: email,
-    //     password: password,
-    //   });
-    //   console.log("Response Data:", response.data);
-    //   if (response.status === 200) {
-    //     Alert.alert("Login success");
-    //     navigation.navigate("MainScreen");
-    //   } else {
-    //     Alert.alert("Erreur", response.data.message || "Identifiants incorrects");
-    //   }
-    // } catch (error) {
-    //   console.error("Full Error:", error);
-    //   if (error.response) {
-    //     Alert.alert("Erreur", error.response.data.message || "Une erreur est survenue");
-    //   }
-    // }
-    navigation.navigate("MainScreen");
+    try {
+      if (!email || !password) {
+        return Alert.alert("Erreur", "Veuillez remplir tous les champs");
+      }
+      const response = await axios.post(`${URL}/api/auth/login`, {
+        email: email,
+        password: password,
+      });
+      if (response.status === 200) {
+        const token = response.data.token;
+        await AsyncStorage.setItem("authToken", token);
+        Alert.alert("Login success");
+        navigation.navigate("MainScreen");
+      } else {
+        Alert.alert("Erreur", response.data.message || "Identifiants incorrects");
+      }
+    } catch (error) {
+      console.error("Full Error:", error);
+      if (error.response) {
+        Alert.alert("Erreur", error.response.data.message || "Une erreur est survenue");
+      }
+    }
+    // navigation.navigate("MainScreen");
   };
 
   return (

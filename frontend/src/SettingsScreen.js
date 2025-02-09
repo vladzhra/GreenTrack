@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
+import handleDisconnect from "./Disconnect";
 
 export default function SettingsScreen({ navigation }) {
   const [isDarkTheme, setIsDarkTheme] = useState(false);
@@ -18,6 +19,18 @@ export default function SettingsScreen({ navigation }) {
   const handleSaveSettings = () => {
     Alert.alert("Settings Saved", "Your preferences have been updated!");
   };
+
+  const disconnect = () => {
+    Alert.alert(
+      "Disconnect",
+      "Are you sure you want to disconnect?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Disconnect", style: "destructive", onPress: () => handleDisconnect(navigation) },
+      ],
+      { cancelable: true }
+    );
+  }
 
   return (
     <View style={[styles.container, isDarkTheme && styles.darkContainer]}>
@@ -90,6 +103,13 @@ export default function SettingsScreen({ navigation }) {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Disconnect Button */}
+      <View style={styles.disconnectButtonContainer}>
+        <TouchableOpacity style={styles.disconnectButton} onPress={disconnect}>
+          <Text style={styles.disconnectButtonText}>Disconnect</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -142,9 +162,26 @@ const styles = StyleSheet.create({
   },
   saveButtonContainer: {
     position: "absolute",
+    bottom: 120,
+    left: 20,
+    right: 20,
+  },
+  disconnectButtonContainer: {
+    position: "absolute",
     bottom: 50,
     left: 20,
     right: 20,
+  },
+  disconnectButton: {
+    backgroundColor: "#D9534F",
+    padding: 15,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  disconnectButtonText: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "600",
   },
   saveButton: {
     backgroundColor: "#4CAF50",
