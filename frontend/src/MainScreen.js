@@ -43,6 +43,7 @@ export default function MainScreen({ navigation }) {
   const fetchBinsInitial = async () => {
     try {
       console.log("🔄 Fetching initial bins positions...");
+      console.log("URL", URL);
       const response = await axios.get(
          `${URL}/api/bins`
       );
@@ -156,11 +157,19 @@ export default function MainScreen({ navigation }) {
         return;
       }
 
+      const filledBins = bins.filter((bin) => bin.fillLevel >= 80);
+
+      if (filledBins.length === 0) {
+        Alert.alert("Error", "No bins are filled to 80% or more!");
+        setLoading(false);
+        return;
+      }
+
       const origin = profile.startingPoint; // Start at the same address
       const destination = profile.startingPoint; // End at the same address
 
       // Collect coordinates for all bins as waypoints
-      const waypointCoordinates = bins
+      const waypointCoordinates = filledBins
         .map((bin) => `${bin.latitude},${bin.longitude}`)
         .join("|");
 
@@ -297,14 +306,17 @@ export default function MainScreen({ navigation }) {
   };  
 
   const openGoogleMapsWithOptimizedWaypoints = async () => {
+
+    const filledBins = bins.filter((bin) => bin.fillLevel >= 80);
+
     // Assurez-vous que bins contient bien vos bins et que la réponse de l'API Directions est disponible
-    if (!bins || bins.length === 0) {
+    if (!filledBins || filledBins.length === 0) {
       Alert.alert("Erreur", "Aucun bin disponible pour calculer l'itinéraire.");
       return;
     }
     
     // Construit le tableau d'origine des waypoints à partir des bins
-    const originalWaypoints = bins.map(bin => `${bin.latitude},${bin.longitude}`);
+    const originalWaypoints = filledBins.map(bin => `${bin.latitude},${bin.longitude}`);
     
     // Supposons que vous avez déjà obtenu la réponse de l'API Directions (par exemple, dans une variable response)
     // Ici, on simule la récupération de l'ordre optimisé depuis la réponse
@@ -335,6 +347,12 @@ export default function MainScreen({ navigation }) {
       .catch((err) => console.error("Erreur lors de l'ouverture de Google Maps:", err));
   };  
 
+  const getFillColor = (fillLevel) => {
+    if (fillLevel < 50) return "green";
+    else if (fillLevel < 80) return "orange";
+    else return "red";
+  };
+  
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -374,12 +392,27 @@ export default function MainScreen({ navigation }) {
           pinColor={bin.fillLevel >= 80 ? "red" : "green"}
         >
           <Callout>
-            <View style={{ width: 100, padding: 5, alignItems: "center", justifyContent: "center" }}>
-              <Text style={{ fontWeight: "bold", textAlign: "center" }}>{bin.name}</Text>
-              <Text style={{textAlign: "center"}}>Fill Level: {bin.fillLevel}%</Text>
-              {/* Vous pouvez ajouter d'autres informations ici */}
+          <View style={styles.calloutContainer}>
+            {/* Partie gauche avec les informations */}
+            <View style={styles.calloutInfo}>
+              <Text style={styles.calloutTitle}>{bin.name}</Text>
+              <Text style={styles.calloutText}>Fill Level: {bin.fillLevel}%</Text>
             </View>
-          </Callout>
+
+            {/* Partie droite avec la barre de progression */}
+            <View style={styles.progressBarContainer}>
+              <View
+                style={[
+                  styles.progressBarFill,
+                  {
+                    width: `${bin.fillLevel}%`,
+                    backgroundColor: getFillColor(bin.fillLevel),
+                  },
+                ]}
+              />
+            </View>
+          </View>
+        </Callout>
         </Marker>
         ))}
 
@@ -695,5 +728,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 10,
     backgroundColor: "transparent",
-  },  
+  },
+  progressBarContainer: {
+    width: 100,       // largeur fixe de la barre
+    height: 10,       // hauteur de la barre
+    backgroundColor: "#e0e0e0", // couleur de fond (barre vide)
+    borderRadius: 5,
+    overflow: "hidden",
+    marginTop: 5,
+  },
+  progressBarFill: {
+    height: "100%",
+    borderRadius: 5,
+  },
 });
