@@ -29,7 +29,8 @@ export default function MainScreen({ navigation }) {
   const [profile, setProfile] = useState({
     name: "",
     email: "",
-    stationAdress: "",
+    // stationAdress: "Carrer de Joan Miró, 21, Sant Martí, 08005 Barcelona",
+    stationAdress: "Carre de Sant Miquel, 56, 08003 Barcelona",
     startingPoint: "",
   });
   const { bins, setBins } = useContext(BinsContext);
@@ -129,22 +130,22 @@ export default function MainScreen({ navigation }) {
       });
   }, []);
 
-  const handleLongPress = (event) => {
-    const { latitude, longitude } = event.nativeEvent.coordinate;
-    setNewBin({ latitude, longitude, title: "" });
-    setModalVisible(true);
-  };
+  // const handleLongPress = (event) => {
+  //   const { latitude, longitude } = event.nativeEvent.coordinate;
+  //   setNewBin({ latitude, longitude, title: "" });
+  //   setModalVisible(true);
+  // };
 
-  const handleAddBin = () => {
-    if (newBin.title.trim()) {
-      setBins([...bins, newBin]);
-      setModalVisible(false);
-      setNewBin({ latitude: null, longitude: null, title: "" });
-      Alert.alert("Bin Added", "New bin added to the map.");
-    } else {
-      Alert.alert("Error", "Please provide a title for the bin.");
-    }
-  };
+  // const handleAddBin = () => {
+  //   if (newBin.title.trim()) {
+  //     setBins([...bins, newBin]);
+  //     setModalVisible(false);
+  //     setNewBin({ latitude: null, longitude: null, title: "" });
+  //     Alert.alert("Bin Added", "New bin added to the map.");
+  //   } else {
+  //     Alert.alert("Error", "Please provide a title for the bin.");
+  //   }
+  // };
 
   // Function to fetch the optimal route that starts/ends at your address and passes through every bin
   const fetchRoute = async () => {
@@ -197,22 +198,19 @@ export default function MainScreen({ navigation }) {
           response.data.routes[0].overview_polyline.points
         );
         console.log("✅ Route decoded successfully !");
-
-        Alert.alert(
-          "Open Navigation",
-          "Choose your navigation app:",
-          [
-            { text: "Google Maps", onPress: openGoogleMapsWithOptimizedWaypoints },
-            { text: "Cancel", style: "cancel" }
-          ],
-          { cancelable: true }
-        );
+        setTimeout(() => {
+          Alert.alert(
+            "Itinerary Calculated",
+            "Check the map for the optimal route!",
+            [
+              { text: "Google Maps", onPress: openGoogleMapsWithOptimizedWaypoints },
+              { text: "Cancel", style: "cancel" }
+            ],
+            { cancelable: true }
+          );
+        }, 100);
         setRouteCoordinates(points);
         setDisplayRoute(true);
-        Alert.alert(
-          "Itinerary Calculated",
-          "Check the map for the optimal route!"
-        );
       } else {
         Alert.alert("Error", "No route found!");
       }
@@ -383,7 +381,7 @@ export default function MainScreen({ navigation }) {
           latitudeDelta: 0.0922,
           longitudeDelta: 0.0421,
         }}
-        onLongPress={handleLongPress}
+        // onLongPress={handleLongPress}
       >
         {bins.map((bin, index) => (
         <Marker
@@ -553,7 +551,7 @@ export default function MainScreen({ navigation }) {
               value={newBin.title}
               onChangeText={(text) => setNewBin({ ...newBin, title: text })}
             />
-            <View style={styles.modalActions}>
+            {/* <View style={styles.modalActions}>
               <TouchableOpacity
                 style={styles.cancelButton}
                 onPress={() => setModalVisible(false)}
@@ -563,7 +561,7 @@ export default function MainScreen({ navigation }) {
               <TouchableOpacity style={styles.addButton} onPress={handleAddBin}>
                 <Text style={styles.addButtonText}>Add Bin</Text>
               </TouchableOpacity>
-            </View>
+            </View> */}
           </View>
         </View>
       </Modal>
