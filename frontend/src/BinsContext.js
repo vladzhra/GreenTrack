@@ -7,8 +7,8 @@ export const BinsProvider = ({ children }) => {
   const [profile, setProfile] = useState({
     name: "",
     email: "",
-    stationAdress: "Carrer de Joan Miró, 21, Sant Martí, 08005 Barcelona",
-    startingPoint: "",
+    stationAdress: "Carrer de Joan Miró, 21, 08005 Barcelona",
+    startingPoint: "41.390832,2.193923",
   });
 
   return (
