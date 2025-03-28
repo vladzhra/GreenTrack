@@ -26,14 +26,7 @@ export default function MainScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [displayRoute, setDisplayRoute] = useState(false);
   const [isProfileModalVisible, setProfileModalVisible] = useState(false);
-  const [profile, setProfile] = useState({
-    name: "",
-    email: "",
-    // stationAdress: "Carrer de Joan Miró, 21, Sant Martí, 08005 Barcelona",
-    stationAdress: "Carre de Sant Miquel, 56, 08003 Barcelona",
-    startingPoint: "",
-  });
-  const { bins, setBins } = useContext(BinsContext);
+  const { bins, setBins, profile, setProfile } = useContext(BinsContext);
   const [isModalVisible, setModalVisible] = useState(false);
   const [newBin, setNewBin] = useState({
     latitude: null,
@@ -103,7 +96,7 @@ export default function MainScreen({ navigation }) {
 
       if (response.status === 200) {
         // Mettre à jour le profil avec les informations récupérées
-        setProfile({...profile, name: response.data.username, email: response.data.email});
+        setProfile(prevProfile => ({...prevProfile, name: response.data.username, email: response.data.email}));
         console.log("✅ Informations utilisateur récupérées avec succès !");
       } else {
         Alert.alert("Erreur", response.data.message || "Une erreur est survenue");
@@ -123,7 +116,7 @@ export default function MainScreen({ navigation }) {
       geocodeAddress(profile.stationAdress).then((coords) => {
         if (coords) {
           // Utilisez les coordonnées pour modifier le startingPoint du profil
-          setProfile({ ...profile, startingPoint: `${coords.latitude},${coords.longitude}` });
+          setProfile(prevProfile => ({...prevProfile, startingPoint: `${coords.latitude},${coords.longitude}`}));
         } else {
           console.log("❌ Erreur lors de la géocodification");
         }
@@ -270,7 +263,7 @@ export default function MainScreen({ navigation }) {
       if (profile.stationAdress) {
         const coords = await geocodeAddress(profile.stationAdress);
         if (coords) {
-          setProfile({ ...profile, startingPoint: `${coords.latitude},${coords.longitude}` });
+          setProfile(prevProfile => ({...prevProfile, startingPoint: `${coords.latitude},${coords.longitude}`}));
         } else {
           Alert.alert("Erreur", "Impossible de géocoder l'adresse de la maison");
         }
@@ -551,17 +544,6 @@ export default function MainScreen({ navigation }) {
               value={newBin.title}
               onChangeText={(text) => setNewBin({ ...newBin, title: text })}
             />
-            {/* <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.addButton} onPress={handleAddBin}>
-                <Text style={styles.addButtonText}>Add Bin</Text>
-              </TouchableOpacity>
-            </View> */}
           </View>
         </View>
       </Modal>

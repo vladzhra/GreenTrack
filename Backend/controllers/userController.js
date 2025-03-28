@@ -11,7 +11,6 @@ const getAllUsers = async (req, res) => {
   
 const getUserById = async (req, res) => {
     try {
-        console.log("🔄 Récupération de l'utilisateur avec l'ID :", req.user.id);
         const user = await User.findByPk(req.user.id);
         if (!user) {
             console.log("❌ Utilisateur introuvable !");
