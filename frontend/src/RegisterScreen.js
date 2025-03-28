@@ -22,7 +22,7 @@ const RegisterScreen = ({ navigation }) => {
         email: email,
         password: password,
       });
-      if (response.status === 200) {
+      if (response.status === 200 || response.status === 201) {
         Alert.alert("Register success");
         navigation.navigate("LoginScreen");
       } else {
