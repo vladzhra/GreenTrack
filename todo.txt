@@ -2,13 +2,13 @@ Capstone :
 
 link back->front ✅
 ajouter maison pour faire le centre de trie ✅
-ajouter un level et changer la couleur du marqueur au poubelle avec une bar qui change de couleur en fonction du level de la poubelle 
+ajouter un level et changer la couleur du marqueur au poubelle avec une bar qui change de couleur en fonction du level de la poubelle ✅
 login page, register ✅
-corriger params
+corriger params ✅
 faire en sorte que le camion passe que par les poubelles remplies à 80% ou plus ✅
 link all bins au back sans refaire un call api ✅
-regler le probleme du calculate itinerary (besoin d'appuyer 2 fois)
+regler le probleme du calculate itinerary (besoin d'appuyer 2 fois) 
 link le profile au back ✅
-l'adresse du profile se remet à "" quand on quitte la mainScreen et qu'on revient dessus
+l'adresse du profile se remet à "" quand on quitte la mainScreen et qu'on revient dessus ✅
 message sur l'intitulé de l'Alert quand on se register "Erreur" alors que ça a réussi
-quand on se déconnecte puis reco on a plus son nom dans la profile page
+quand on se déconnecte puis reco on a plus son nom dans la profile page ✅
