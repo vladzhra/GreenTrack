@@ -42,12 +42,14 @@ const RegisterScreen = ({ navigation }) => {
       <TextInput
         style={styles.input}
         placeholder="Username"
+        placeholderTextColor="#999"
         value={username}
         onChangeText={setUsername}
       />
       <TextInput
         style={styles.input}
         placeholder="Email"
+        placeholderTextColor="#999"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
@@ -56,6 +58,7 @@ const RegisterScreen = ({ navigation }) => {
       <TextInput
         style={styles.input}
         placeholder="Password"
+        placeholderTextColor="#999"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
@@ -95,6 +98,7 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     borderRadius: 8,
     marginBottom: 20,
+    color: "#000",
   },
   button: {
     backgroundColor: "#001F3F",

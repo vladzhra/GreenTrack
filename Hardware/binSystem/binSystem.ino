@@ -8,11 +8,11 @@
  #include <ArduinoJson.h>
  
  // ===== CONFIGURATION =====
- const char* ssid = "Charles";
- const char* password = "123456789";
- const char* serverUrl = "http://192.168.239.77:3000/api/bins"; // URL de votre API backend
+ const char* ssid = "flemme02";
+ const char* password = "12345789";
+ const char* serverUrl = "http://10.48.255.111:3000/api/bins"; // URL de votre API backend
  const int binId = 2; // ID unique de cette poubelle
- const float emptyBinDistance = 80.0; // Distance en cm quand la poubelle est vide
+ const float emptyBinDistance = 50.0; // Distance en cm quand la poubelle est vide
  const int updateInterval = 5; // Secondes entre chaque envoi (5 secondes)
  
  // Configuration des pins pour HC-SR04
