@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import {
   View,
   Text,
@@ -21,6 +21,8 @@ import { BinsContext } from "./BinsContext";
 import { Linking } from "react-native";
 import getToken from "./Token";
 
+const REFRESH_INTERVAL = 30000; // 30 secondes
+
 export default function MainScreen({ navigation }) {
   const [routeCoordinates, setRouteCoordinates] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -33,24 +35,25 @@ export default function MainScreen({ navigation }) {
     longitude: null,
     title: "",
   });
+  
+  // Référence pour stocker l'intervalle
+  const refreshIntervalRef = useRef(null);
 
   const fetchBinsInitial = async () => {
     try {
-      console.log("🔄 Fetching initial bins positions...");
-      console.log("URL", URL);
+      console.log("🔄 Fetching bins positions...");
       const response = await axios.get(
          `${URL}/api/bins`
       );
       // On attend que l'API renvoie un tableau d'objets contenant au moins { name, latitude, longitude, fillPercentage }
       if (response.data && Array.isArray(response.data)) {
         setBins(response.data);
-        console.log("✅ Initial bins positions fetched successfully!");
+        console.log("✅ Bins positions fetched successfully!");
       } else {
-        Alert.alert("Error", "Invalid data received from server!");
+        console.error("Invalid data received from server!");
       }
     } catch (error) {
       console.error("Error fetching bins positions:", error);
-      Alert.alert("Error", "Failed to fetch initial bins positions!");
     }
   };
 
@@ -62,7 +65,6 @@ export default function MainScreen({ navigation }) {
       console.log("🔄 Calling Geocoding API...");
       const response = await axios.get(url);
       if (response.data.status === "OK") {
-        // Supposons que le premier résultat est le plus pertinent
         const location = response.data.results[0].geometry.location;
         console.log("✅ Call to Geocoding API successful !");
         return {
@@ -99,46 +101,89 @@ export default function MainScreen({ navigation }) {
         setProfile(prevProfile => ({...prevProfile, name: response.data.username, email: response.data.email}));
         console.log("✅ Informations utilisateur récupérées avec succès !");
       } else {
-        Alert.alert("Erreur", response.data.message || "Une erreur est survenue");
+        console.error("Erreur lors de la récupération des informations utilisateur:", response.data.message);
       }
     } catch (error) {
-      console.error("Erreur lors de la récupération des informations utilisateur :", error);
-      Alert.alert("Erreur", "Une erreur est survenue lors de la récupération des informations utilisateur.");
-    } finally {
-      setLoading(false);
+      console.error("Erreur lors de la récupération des informations utilisateur:", error);
     }
   };
 
-  useEffect(() => {
-    fetchBinsInitial();
-    fetchUserInfo();
-    if (profile.stationAdress)
-      geocodeAddress(profile.stationAdress).then((coords) => {
+  // Fonction de rafraîchissement des données
+  const handleRefresh = async (showLoading = false) => {
+    if (showLoading) setLoading(true);
+    
+    try {
+      // 1. Recharger les bins depuis l'API
+      await fetchBinsInitial();
+
+      // 2. Récupérer les informations utilisateur
+      await fetchUserInfo();
+
+      // 3. Recalculer la position de la maison via geocodeAddress
+      if (profile.stationAdress) {
+        const coords = await geocodeAddress(profile.stationAdress);
         if (coords) {
-          // Utilisez les coordonnées pour modifier le startingPoint du profil
           setProfile(prevProfile => ({...prevProfile, startingPoint: `${coords.latitude},${coords.longitude}`}));
         } else {
           console.log("❌ Erreur lors de la géocodification");
         }
-      });
+    
+        // 4. Réinitialiser l'itinéraire si nécessaire
+        if (showLoading) {
+          setRouteCoordinates([]);
+          setDisplayRoute(false);
+        }
+      }
+    } catch (error) {
+      console.error("Erreur dans le refresh :", error);
+    } finally {
+      if (showLoading) setLoading(false);
+    }
+  };  
+
+  // Configuration du rafraîchissement initial et automatique
+  useEffect(() => {
+    // Premier chargement avec indicateur de chargement
+    handleRefresh(true);
+
+    // Mettre en place l'intervalle de rafraîchissement automatique
+    refreshIntervalRef.current = setInterval(() => {
+      handleRefresh(false); // Pas d'indicateur de chargement pour les rafraîchissements automatiques
+    }, REFRESH_INTERVAL);
+
+    // Nettoyer l'intervalle lorsque le composant est démonté
+    return () => {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+      }
+    };
   }, []);
 
-  // const handleLongPress = (event) => {
-  //   const { latitude, longitude } = event.nativeEvent.coordinate;
-  //   setNewBin({ latitude, longitude, title: "" });
-  //   setModalVisible(true);
-  // };
-
-  // const handleAddBin = () => {
-  //   if (newBin.title.trim()) {
-  //     setBins([...bins, newBin]);
-  //     setModalVisible(false);
-  //     setNewBin({ latitude: null, longitude: null, title: "" });
-  //     Alert.alert("Bin Added", "New bin added to the map.");
-  //   } else {
-  //     Alert.alert("Error", "Please provide a title for the bin.");
-  //   }
-  // };
+  // Géocodification lors du changement d'adresse
+  useEffect(() => {
+    const initializeData = async () => {
+      setLoading(true);
+      await fetchBinsInitial();
+      await fetchUserInfo();
+      
+      if (profile.stationAdress) {
+        try {
+          const coords = await geocodeAddress(profile.stationAdress);
+          if (coords) {
+            setProfile(prevProfile => ({
+              ...prevProfile, 
+              startingPoint: `${coords.latitude},${coords.longitude}`
+            }));
+          }
+        } catch (error) {
+          console.error("Erreur lors de la géocodification:", error);
+        }
+      }
+      setLoading(false);
+    };
+    
+    initializeData();
+  }, []);
 
   // Function to fetch the optimal route that starts/ends at your address and passes through every bin
   const fetchRoute = async () => {
@@ -251,33 +296,6 @@ export default function MainScreen({ navigation }) {
     return points;
   };
 
-  const handleRefresh = async () => {
-    setLoading(true);
-    try {
-      // 1. Recharger les bins depuis l'API
-      await fetchBinsInitial();
-
-      await fetchUserInfo();
-
-      // 2. Recalculer la position de la maison via geocodeAddress
-      if (profile.stationAdress) {
-        const coords = await geocodeAddress(profile.stationAdress);
-        if (coords) {
-          setProfile(prevProfile => ({...prevProfile, startingPoint: `${coords.latitude},${coords.longitude}`}));
-        } else {
-          Alert.alert("Erreur", "Impossible de géocoder l'adresse de la maison");
-        }
-    
-        // 3. Réinitialiser l'itinéraire pour forcer l'utilisateur à appuyer sur "Calculate Itinerary"
-        setRouteCoordinates([]);
-        setDisplayRoute(false);
-      }
-    } catch (error) {
-      console.error("Erreur dans le refresh :", error);
-    }
-    setLoading(false);
-  };  
-
   // Gestion du bouton "Calculate Itinerary / Toggle Itinerary"
   const handleItineraryButtonPress = async () => {
     // Si aucun itinéraire n'est encore calculé, lance la requête et affiche l'itinéraire immédiatement.
@@ -365,6 +383,14 @@ export default function MainScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
+      {/* Indicateur de mise à jour automatique */}
+      {loading && (
+        <View style={styles.autoRefreshIndicator}>
+          <ActivityIndicator size="small" color="#FFFFFF" />
+          <Text style={styles.autoRefreshText}>Mise à jour...</Text>
+        </View>
+      )}
+
       {/* Map */}
       <MapView
         style={styles.map}
@@ -407,16 +433,18 @@ export default function MainScreen({ navigation }) {
         </Marker>
         ))}
 
-        <Marker
-          coordinate={{
-            latitude: parseFloat(profile.startingPoint.split(',')[0]),
-            longitude: parseFloat(profile.startingPoint.split(',')[1])
-          }}
-          title="Recycling Station"
-          anchor={{ x: 0.5, y: 0.5 }}
-        >
-          <FontAwesome5 name="home" size={30} color="#000000FF" />
-        </Marker>
+        {profile.startingPoint && profile.startingPoint.includes(',') && (
+          <Marker
+            coordinate={{
+              latitude: parseFloat(profile.startingPoint.split(',')[0]),
+              longitude: parseFloat(profile.startingPoint.split(',')[1])
+            }}
+            title="Recycling Station"
+            anchor={{ x: 0.5, y: 0.5 }}
+          >
+            <FontAwesome5 name="home" size={30} color="#000000FF" />
+          </Marker>
+        )}
 
         {displayRoute && routeCoordinates.length > 0 && (
           <Polyline
@@ -427,10 +455,10 @@ export default function MainScreen({ navigation }) {
         )}
       </MapView>
 
-      {/* Bottom Navigation */}
+      {/* Bottom Navigation - Bouton de rafraîchissement supprimé */}
       <View style={styles.bottomNav}>
         <TouchableOpacity
-          style={styles.calculateButton}
+          style={styles.calculateButtonWide}
           onPress={handleItineraryButtonPress}
           disabled={loading}
         >
@@ -444,18 +472,6 @@ export default function MainScreen({ navigation }) {
                 ? "Hide Itinerary"
                 : "Display Itinerary"}
             </Text>
-          )}
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.refreshIconButton}
-          onPress={handleRefresh}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
-          ) : (
-            <FontAwesome5 name="sync-alt" size={32} color="#001F3F" />
           )}
         </TouchableOpacity>
       </View>
@@ -478,40 +494,34 @@ export default function MainScreen({ navigation }) {
             >
               <MaterialIcons name="list" size={24} color="white" />
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>Profile</Text>
+            <Text style={styles.modalTitle}>Profile Information</Text>
             <Text style={styles.modalSubTitle}>Name: </Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, styles.readOnlyInput]}
               placeholder="Name"
               value={profile.name}
-              onChangeText={(text) => setProfile({ ...profile, name: text })}
+              editable={false}
             />
             <Text style={styles.modalSubTitle}>Email: </Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, styles.readOnlyInput]}
               placeholder="Email"
               value={profile.email}
-              onChangeText={(text) => setProfile({ ...profile, email: text })}
+              editable={false}
             />
             <Text style={styles.modalSubTitle}>Recycling station: </Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, styles.readOnlyInput]}
               placeholder="Recycling station"
               value={profile.stationAdress}
-              onChangeText={(text) => setProfile({ ...profile, stationAdress: text })}
+              editable={false}
             />
-            <View style={styles.modalActions}>
+            <View style={[styles.modalActions, { justifyContent: "center" }]}>
               <TouchableOpacity
-                style={styles.closeButton}
+                style={[styles.closeButton, { width: '80' }]}
                 onPress={() => setProfileModalVisible(false)}
               >
                 <Text style={styles.closeButtonText}>Close</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.saveButton}
-                onPress={handleSaveProfile}
-              >
-                <Text style={styles.saveButtonText}>Save</Text>
               </TouchableOpacity>
             </View>
             <TouchableOpacity
@@ -597,6 +607,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     height: 50,
   },
+  calculateButtonWide: {
+    backgroundColor: "#001F3F",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginTop: 0,
+    alignItems: "center",
+    height: 50,
+    width: "80%", // Version plus large sans le bouton de rafraîchissement
+  },
   calculateText: {
     color: "white",
     fontWeight: "bold",
@@ -633,6 +653,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 20,
   },
+  readOnlyInput: {
+    backgroundColor: "#f5f5f5",
+    color: "#666",
+  },
   settingsButton: {
     position: "absolute",
     top: 12,
@@ -650,6 +674,7 @@ const styles = StyleSheet.create({
   closeButtonText: {
     color: "white",
     fontWeight: "bold",
+    textAlign: "center",
   },
   saveButton: {
     backgroundColor: "#5cb85c",
@@ -699,15 +724,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 20,
   },
-  refreshIconButton: {
+  // Styles pour l'indicateur de rafraîchissement automatique
+  autoRefreshIndicator: {
     position: "absolute",
+    top: 120, // Juste en dessous du header
     right: 20,
-    top: 0,
-    bottom: 0,
-    justifyContent: "center",
+    backgroundColor: "rgba(0, 31, 63, 0.7)",
+    borderRadius: 20,
+    padding: 8,
+    flexDirection: "row",
     alignItems: "center",
-    padding: 10,
-    backgroundColor: "transparent",
+    zIndex: 1000,
+  },
+  autoRefreshText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    marginLeft: 5,
   },
   progressBarContainer: {
     width: 100,       // largeur fixe de la barre
@@ -720,5 +752,19 @@ const styles = StyleSheet.create({
   progressBarFill: {
     height: "100%",
     borderRadius: 5,
+  },
+  calloutContainer: {
+    padding: 5,
+    minWidth: 150,
+  },
+  calloutInfo: {
+    marginBottom: 5,
+  },
+  calloutTitle: {
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  calloutText: {
+    fontSize: 14,
   },
 });

@@ -20,7 +20,6 @@ const LoginScreen = ({ navigation }) => {
       if (!email || !password) {
         return Alert.alert("Erreur", "Veuillez remplir tous les champs");
       }
-      console.log("URL", URL);
       const response = await axios.post(`${URL}/api/auth/login`, {
         email: email,
         password: password,
